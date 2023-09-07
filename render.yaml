@@ -1,0 +1,5 @@
+services:
+  - name: nodejs
+    plan: starter
+    buildCommand: npm install --production
+    startCommand: node index.js
