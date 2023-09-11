@@ -13,6 +13,7 @@ const commentRouter = require('./routes/comment');
 const contentRouter = require('./routes/content');
 const renderRouter = require("./routes/renderActive");
 const superAdminRouter = require("./routes/superAdmin");
+const categoryRouter = require("./routes/category");
 
 
 const port = process.env.PORT || 4000;
@@ -29,8 +30,9 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/admin', adminRouter)
 app.use('/api/v1/comments', commentRouter);
 app.use('/api/v1/contents', contentRouter);
-app.use('/api/v1/', renderRouter)
-app.use('/api/v1/superAdmin', superAdminRouter)
+app.use('/api/v1/', renderRouter);
+app.use('/api/v1/superAdmin', superAdminRouter);
+app.use('/api/v1/category', categoryRouter);
 
 connectDB();
 app.listen(port, () => {
