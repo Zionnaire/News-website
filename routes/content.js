@@ -1,5 +1,5 @@
 const express = require('express');
-const Content = require('../models/content');
+const { Content, ContentMetadata } = require('../models/content'); // Update the path to your models file
 const Comment = require('../models/comment');
 const Reply = require('../models/reply')
 const Admin = require('../models/admin')
@@ -25,19 +25,22 @@ const logger = createLogger({
 const randomId =
   "_" + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
-
-  //Get all Contents
+// Get all Contents with associated content_metadata
 contentRouter.get("/", async (req, res) => {
   try {
-    const content = await Content.find({});
+    const content = await Content.find({})
+      .populate('metadata'); // Populate the 'metadata' field with content_metadata
+
     return res.status(200).json({ success: true, data: content });
   } catch (error) {
+    logger.error(error);
     return res.json({
       success: false,
       message: error.message,
     });
   }
 });
+
 
 
 const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'image/svg+xml'];
