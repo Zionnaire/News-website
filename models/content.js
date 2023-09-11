@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
-// Define content_metadata schema
-const contentMetadataSchema = new mongoose.Schema({
+const contentSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -10,9 +9,17 @@ const contentMetadataSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  body: {
+    type: String,
+    required: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  premium: {
+    type: Boolean,
+    default: false,
   },
   category: [
     {
@@ -21,29 +28,20 @@ const contentMetadataSchema = new mongoose.Schema({
   ],
   images: [
     {
-      type: Object,
-    },
+      type:{
+        url: {type:String},
+        cld_id: {type:String},
+
+      }    }
   ],
   videos: [
     {
-      type: Object,
-    },
+      type:{
+        url: {type:String},
+        cld_id: {type:String},
+
+      }    }
   ],
-});
-
-// Create content_metadata model
-const ContentMetadata = mongoose.model('ContentMetadata', contentMetadataSchema);
-
-// Define content schema with references to content_metadata
-const contentSchema = new mongoose.Schema({
-  body: {
-    type: String,
-    required: true,
-  },
-  premium: {
-    type: Boolean,
-    default: false,
-  },
   comments: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -112,14 +110,8 @@ const contentSchema = new mongoose.Schema({
       },
     },
   ],
-  // Reference to content_metadata
-  metadata: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ContentMetadata',
-  },
 });
 
-// Create content model
 const Content = mongoose.model('Content', contentSchema);
 
-module.exports = { Content, ContentMetadata };
+module.exports = Content;
