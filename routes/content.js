@@ -8,8 +8,6 @@ const { createLogger, transports, format } = require('winston');
 const SuperAdmin = require('../models/superAdmin');
 const contentRouter = express.Router();
 const cloudinary = require('cloudinary').v2
-// const fs = require('fs');
-// const fileUpload = require('express-fileupload');
 
 // Configure Winston logger
 const logger = createLogger({
@@ -27,6 +25,8 @@ const logger = createLogger({
 const randomId =
   "_" + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
+
+  //Get all Contents
 contentRouter.get("/", async (req, res) => {
   try {
     const content = await Content.find({});
@@ -42,39 +42,8 @@ contentRouter.get("/", async (req, res) => {
 
 const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'image/svg+xml'];
 const allowedVideoTypes = ['video/mp4', 'audio/mpeg', 'audio/mp3'];
-// const maxFilesPerType = 4;
 
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, __dirname + '/uploads');
-//   },
-//   filename: function (req, file, cb) {
-//     const randomId = Math.random().toString(36).substring(2);
-//     cb(null, randomId + file.originalname);
-//   }
-// });
-
-// const fileFilter = (req, file, cb) => {
-//   if (allowedImageTypes.includes(file.mimetype) || allowedVideoTypes.includes(file.mimetype)) {
-//     cb(null, true);
-//   } else {
-//     cb(new Error('Invalid file type'));
-//   }
-// };
-
-// const upload = multer({ 
-//   storage,
-//   fileFilter,
-//   limits: {
-//     fileSize: 10 * 1024 * 1024, // 10 MB file size limit
-//     files: maxFilesPerType * 2, // 4 images + 4 videos = 8 files allowed
-//   },
-// });
-
-
-// Get all contents
-
-
+//Get Content by Certain Parameters
 contentRouter.get('/', async (req, res) => {
   try {
     const { author, date, title } = req.query;
@@ -112,217 +81,7 @@ contentRouter.get('/', async (req, res) => {
   }
 });
 
-  
-
-// Create a new content
-// contentRouter.post('/contents', verifyToken, async (req, res) => {
-//   try {
-//     const { body, title, category } = req.body;
-//     const imageFile = req.files.imageFile;
-//     const videoFile = req.files.videoFile;
-
-//     // Check if a content with the same title and category already exists
-//     const existingContent = await Content.findOne({ title, category });
-
-//     if (existingContent) {
-//       return res.status(409).json({ message: 'Content with the same title already exists', action: 'update' });
-//     }
-
-//     // Generate unique file names for image and video if files are provided
-//     let imageFileName = '';
-//     let videoFileName = '';
-//     let imageImgUrl = '';
-//     let videoUrl = '';
-
-//     if (imageFile) {
-//       imageFileName = randomId + imageFile.name;
-//       imageImgUrl = req.protocol + '://' + req.get('host') + '/api/v1/contents/uploads/' + imageFileName;
-//     }
-
-//     if (videoFile) {
-//       videoFileName = randomId + videoFile.name;
-//       videoUrl = req.protocol + '://' + req.get('host') + '/api/v1/contents/uploads/' + videoFileName;
-//     }
-
-//     const document = {
-//       title,
-//       category,
-//       author: req.user.userName, // Set the author as the username of the authenticated user
-//       image: imageImgUrl,
-//       video: videoUrl,
-//       body,
-//     };
-
-//     if (imageFile) {
-//       imageFile.mv(__dirname + '/uploads/' + imageFileName, function (imageErr) {
-//         if (imageErr) {
-//           return res.json({ success: false, message: 'Image upload failed' });
-//         }
-
-//         if (videoFile) {
-//           videoFile.mv(__dirname + '/uploads/' + videoFileName, async function (videoErr) {
-//             if (videoErr) {
-//               return res.json({ success: false, message: 'Video upload failed' });
-//             }
-
-//             await createContent(document, req, res);
-//           });
-//         } else {
-//            createContent(document, req, res);
-//         }
-//       });
-//     } else {
-//       if (videoFile) {
-//         videoFile.mv(__dirname + '/uploads/' + videoFileName, async function (videoErr) {
-//           if (videoErr) {
-//             return res.json({ success: false, message: 'Video upload failed' });
-//           }
-
-//           await createContent(document, req, res);
-//         });
-//       } else {
-//         await createContent(document, req, res);
-//       }
-//     }
-
-//     async function createContent(document, req, res) {
-//       try {
-//         const userId = req.user.id;
-//         const adminExist = await Admin.findById(userId);
-//         const superAdminExist = await SuperAdmin.findById(userId);
-
-//         if (!adminExist && !superAdminExist) {
-//           return res.status(403).json({ message: 'Unauthorized access' });
-//         }
-
-//         const role = adminExist ? adminExist.role : superAdminExist.role;
-//         const email = adminExist ? adminExist.email : superAdminExist.email;
-
-//         const token = signJwt({ id: userId, role, email });
-
-//         const content = await Content.create(document);
-//         content.publishedStatus = 'Published';
-
-//         res.status(200).json({
-//           success: true,
-//           message: 'Upload success',
-//           data: { ...content._doc }, // Include the author in the response          
-//           token,
-//         });
-//       } catch (error) {
-//         res.json({
-//           success: false,
-//           message: error.message,
-//         });
-//       }
-//     }
-//   } catch (error) {
-//     logger.error(error);
-//     console.error('Content Error:', error);
-//     return res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// });
-
-
-// contentRouter.post('/contents', verifyToken, async (req, res) => {
-//   try {
-//     const { body, title, category } = req.body;
-//     const files = Object.values(req.files); // Convert object to array
-
-//     if (!files || files.length === 0) {
-//       return res.status(400).json({ message: 'No files uploaded' });
-//     }
-
-//     if (files.length > maxFilesPerType * 2) {
-//       return res.status(400).json({ message: `Exceeded the maximum number of files allowed (${maxFilesPerType} images + ${maxFilesPerType} videos)` });
-//     }
-
-//     // Separate images and videos from the files array
-//     const images = [];
-//     const videos = [];
-//     files.forEach(file => {
-//       if (allowedImageTypes.includes(file.mimetype)) {
-//         images.push(file);
-//       } else if (allowedVideoTypes.includes(file.mimetype)) {
-//         videos.push(file);
-//       }
-//     });
-
-//     // Check if a content with the same title and category already exists
-//     const existingContent = await Content.findOne({ title, category });
-
-//     if (existingContent) {
-//       return res.status(409).json({ message: 'Content with the same title already exists', action: 'update' });
-//     }
-
-//     // Generate unique file names for image and video if files are provided
-//     var imageFileName = '';
-//     var videoFileName = '';
-//     var imageImgUrl = '';
-//     var videoUrl = '';
-//     var randomId
-
-//     if (images.length > 0) {
-//       randomId = Math.random().toString(36).substring(2);
-//       imageFileName = randomId + images[0].name;
-//       // imageImgUrl = req.protocol + '://' + req.get('host') + '/api/v1/contents/uploads/' + imageFileName;
-//       // await saveFile(images[0], __dirname + '/uploads/' + imageFileName);
-//       const base64Image = `data:image/png;base64,${images[0].data.toString("base64")}`
-//       var {secure_url: imageImgUrl, public_id: imageCldId}  = await cloudinary.uploader.upload(base64Image, {
-//         folder: `contents/images/${imageFileName}`
-//       })
-//     }
-
-
-//     if (videos.length > 0) {
-//       randomId = Math.random().toString(36).substring(2);
-//       videoFileName = randomId + videos[0].name;
-//       // videoUrl = req.protocol + '://' + req.get('host') + '/api/v1/contents/uploads/' + videoFileName;
-//       // await saveFile(videos[0], __dirname + '/uploads/' + videoFileName);
-//       const base64Video = `data:video/mp4;base64,${videos[0].data.toString("base64")}`
-//       var {secure_url: videoUrl, public_id: videoCldId}  = await cloudinary.uploader.upload(base64Video, {
-//         folder: `contents/videos/${videoFileName}
-//       })
-
-//     }
-
-//     const document = {
-//       title,
-//       category,
-//       author: req.user.userName, // Set the author as the username of the authenticated user
-//       image: {
-//         url: imageImgUrl,
-//         cld_id: imageCldId
-//       },
-//       video: {
-//         url: videoUrl,
-//         cld_id: videoCldId
-//       },
-//       body,
-//     };
-
-//     await createContent(document, req, res);
-
-//   } catch (error) {
-//     logger.error(error);
-//     console.error('Content Error:', error.message);
-//     return res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// });
-
-// async function saveFile(file, path) {
-//   return new Promise((resolve, reject) => {
-//     file.mv(path, (err) => {
-//       if (err) {
-//         logger.error(error);
-//         console.error('File Save Error:', err);
-//         reject(err);
-//       } else {
-//         resolve();
-//       }
-//     });
-//   });
-// }
+//Create Contents
 
 contentRouter.post('/contents', verifyToken, async (req, res) => {
   try {
@@ -409,7 +168,7 @@ await createContent(document, req, res);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
+//Cloudinary File Upload
 const uploadVideoToCloudinary = async (base64Video, folderPath) => {
   try {
     const { secure_url: videoUrl, public_id: videoCldId } = await cloudinary.uploader.upload(base64Video, {

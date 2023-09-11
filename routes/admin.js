@@ -1,8 +1,9 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
 const Admin = require('../models/admin')
-const roles = require('../models/role')
-const { signJwt } = require('../middlewares/jwt')
+const { signJwt, verifyToken } = require("../middlewares/jwt");
+const { isAdmin } = require("../middlewares/authAccess");
+
 const users = require('../models/users')
 const adminRouter = express.Router()
 
@@ -50,63 +51,28 @@ adminRouter.post('/login', async (req, res) => {
     }
   });
   
-  
-//   adminRouter.post('/register', async (req, res) => {
-//     try {
-//       const { userName, email, password, cPassword, role } = req.body;
-  
-//       let emailExists = await Admin.findOne({ email: email });
-//       let nameExist = await Admin.findOne({ userName: userName });
-//       console.log(nameExist);
-  
-//       if (nameExist) {
-//         return res.json({
-//           message: "Username already exists",
-//         });
-//       }
-  
-//       if (emailExists) {
-//         return res.json({
-//           message: "Email already exists",
-//         });
-//       }
-  
-//       if (!password) {
-//         return res.json({ message: "Password can't be empty" });
-//       }
-  
-//       if (cPassword !== password) {
-//         return res.json({ message: "Confirm Password has to match Password" });
-//       }
-  
-//       let hashedPassword = await bcrypt.hash(password, 10);
-//       let createNewAdmin = await Admin.create({
-//         userName: userName,
-//         email: email,
-//         password: hashedPassword,
-//       });
-  
-//       let token = signJwt({ id: createNewAdmin._id, email });
-//       return res.json({
-//         msg: {
-//           message: "User successfully registered",
-//           status: true,
-//         },
-//         data: {
-//           userName: createNewAdmin.userName,
-//           email: createNewAdmin.email,
-//           accessToken: token,
-//           role: createNewAdmin.role, // Assuming 'role' is a property of the 'createNewAdmin' object
-//         },
-//       });
-//     } catch (error) {
-//       // Handle the error appropriately
-//       console.error(error);
-//       return res.status(500).json({
-//         message: "An error occurred during registration",
-//       });
-//     }
-//   });
+  adminRouter.post("/admin/post-content", verifyToken, isAdmin, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Check if the authenticated user is an Admin
+    const AdminExist = await Admin.findById(userId);
+    if (!AdminExist) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+
+    const { content } = req.body;
+
+    // Logic to post content using the content
+
+    return res.json({
+      message: "Content posted"
+    });
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
   
 
 module.exports = adminRouter

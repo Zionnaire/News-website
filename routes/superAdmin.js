@@ -7,7 +7,7 @@ const { createLogger, transports, format } = require('winston');
 const { limiter } = require('../middlewares/rate-limit');
 const SuperAdmin = require('../models/superAdmin');
 const jwt = require('jsonwebtoken');
-const { isSuperAdmin, isAdmin } = require("../middlewares/authAccess");
+const { isSuperAdmin } = require("../middlewares/authAccess");
 const Withdrawal = require('../models/withdrawal')
 
 const superAdminRouter = express.Router();
@@ -237,27 +237,6 @@ superAdminRouter.post("/admin/register", async (req, res) => {
   });
   
 
-// superAdminRouter.post("/admin/post-content", verifyToken, isSuperAdmin || isAdmin, async (req, res) => {
-//   try {
-//     const userId = req.user.id;
 
-//     // Check if the authenticated user is a super admin
-//     const superAdminExist = await SuperAdmin.findById(userId);
-//     if (!superAdminExist) {
-//       return res.status(403).json({ message: "Unauthorized access" });
-//     }
-
-//     const { content } = req.body;
-
-//     // Logic to post content using the content
-
-//     return res.json({
-//       message: "Content posted"
-//     });
-//   } catch (error) {
-//     logger.error(error);
-//     return res.status(500).json({ message: "Internal Server Error" });
-//   }
-// });
 
 module.exports = superAdminRouter;

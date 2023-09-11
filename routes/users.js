@@ -75,7 +75,6 @@ userRouter.post(
 );
 
 //Get all Users
-
 userRouter.get('/users', async (req, res) => {
   try {
 
