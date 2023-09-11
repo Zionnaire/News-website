@@ -27,17 +27,17 @@ const logger = createLogger({
 const randomId =
   "_" + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
-// contentRouter.get("/", async (req, res) => {
-//   try {
-//     const content = await Content.find({});
-//     return res.status(200).json({ success: true, data: content });
-//   } catch (error) {
-//     return res.json({
-//       success: false,
-//       message: error.message,
-//     });
-//   }
-// });
+contentRouter.get("/", async (req, res) => {
+  try {
+    const content = await Content.find({});
+    return res.status(200).json({ success: true, data: content });
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
 
 const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'image/svg+xml'];
