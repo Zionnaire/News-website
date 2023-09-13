@@ -27,58 +27,59 @@ const logger = createLogger({
 });
 
 superAdminRouter.post("/admin/register", async (req, res) => {
-  try {
-    const { userName, email, password, cPassword } = req.body;
+    try {
+      const { userName, email, password, cPassword} = req.body;
+  
+      // Check if a super admin with the same email already exists
+      const existingSuperAdmin = await SuperAdmin.findOne({ email });
+      if (existingSuperAdmin) {
+        return res.status(409).json({ message: 'Super admin with this email already exists' });
+      }
 
-    // Check if cPassword is equal to password
-    if (password !== cPassword) {
-      return res.status(400).json({ message: 'Password and confirmation password do not match' });
+      if (password !== cPassword) {
+        return res.status(400).json({ message: 'Password and confirmation password do not match' });
+      }
+  
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const superAdminRole = await Role.findOne({ name: 'SuperAdmin' });
+      if (!superAdminRole) {
+        return res.status(409).json({ message: 'Super admin role not existing' });
+      }
+  
+      // Create a new super admin
+      const newSuperAdmin = new SuperAdmin({
+        userName,
+        email,
+        password: hashedPassword,
+        cPassword: hashedPassword,
+        roleId: superAdminRole._id,
+        premium: true,
+        role: superAdminRole.name
+      });
+  
+      // Save the new super admin
+      await newSuperAdmin.save();
+      const token = signJwt({ id: newSuperAdmin._id, email: newSuperAdmin.email });      // Update the premium field of the Content model
+    // await Content.updateMany({}, { premium: true });
+  
+      return res.json({
+        message: 'Super admin registered successfully',
+        Id: newSuperAdmin._id,
+        userName: newSuperAdmin.userName,
+        email: newSuperAdmin.email,
+        roleId: newSuperAdmin.roleId,
+        role: superAdminRole.name,
+        premium: newSuperAdmin.premium,
+        token: token // Add the premium field to the response and set it to true
+      });
+    } catch (error) {
+      logger.error(error);
+      console.error('Registration Error:', error); // Add this line to log the error to the console
+      return res.status(500).json({ message: 'Internal Server Error' });
     }
-
-    // Check if a super admin with the same email already exists
-    const existingSuperAdmin = await SuperAdmin.findOne({ email });
-    if (existingSuperAdmin) {
-      return res.status(409).json({ message: 'Super admin with this email already exists' });
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const superAdminRole = await Role.findOne({ name: 'SuperAdmin' });
-    if (!superAdminRole) {
-      return res.status(409).json({ message: 'Super admin role not existing' });
-    }
-
-    // Create a new super admin
-    const newSuperAdmin = new SuperAdmin({
-      userName,
-      email,
-      password: hashedPassword,
-      roleId: superAdminRole._id,
-      premium: true,
-      role: superAdminRole.name
-    });
-
-    // Save the new super admin
-    await newSuperAdmin.save();
-    const token = signJwt({ id: newSuperAdmin._id, email: newSuperAdmin.email });
-
-    return res.json({
-      message: 'Super admin registered successfully',
-      Id: newSuperAdmin._id,
-      userName: newSuperAdmin.userName,
-      email: newSuperAdmin.email,
-      roleId: newSuperAdmin.roleId,
-      role: superAdminRole.name,
-      premium: newSuperAdmin.premium,
-      token: token
-    });
-  } catch (error) {
-    logger.error(error);
-    console.error('Registration Error:', error);
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
+    
+  });
   
 
   superAdminRouter.post("/admin/login", async (req, res) => {
