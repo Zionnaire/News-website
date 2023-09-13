@@ -29,8 +29,17 @@ const userSchema = new mongoose.Schema({
     default: 0
   },
   withdrawalCount: {
-    type: Number,
-    default: 0
+    type: [
+      {
+        accountNumber: String,
+        bankName: String,
+        amount: Number,
+        date:{
+          type: String,
+          default: new Date().getTime()
+        }
+      }
+    ]
   }
 });
 

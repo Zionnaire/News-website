@@ -92,7 +92,7 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'No files uploaded' });
     }
 
-    const maxFilesPerType = 5; // Set the maximum number of files per type
+    const maxFilesPerType = 2; // Set the maximum number of files per type
 
     if (files.length > maxFilesPerType * 2) {
       return res.status(400).json({ message: `Exceeded the maximum number of files allowed (${maxFilesPerType} images + ${maxFilesPerType} videos)` });

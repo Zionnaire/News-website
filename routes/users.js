@@ -39,7 +39,7 @@ userRouter.post(
 
       const userExist = await User.findOne({ email });
       if (userExist) {
-        return res.json({ message: 'User with this email already exists' });
+        return res.status(409).json({ message: 'Super admin with this email already exists' });
       }
       if(cPassword !== password){
         return res.json({message: "Confirm password must be same with password"});

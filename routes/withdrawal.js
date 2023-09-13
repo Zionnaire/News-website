@@ -17,7 +17,7 @@ withdrawalRouter.post('/withdraw', async (req, res) => {
     }
 
     // Check if the user is not premium and has already made a withdrawal
-    if (!user.isPremium && user.withdrawalCount >= 1) {
+    if (!user.isPremium && user.withdrawalCount.length >= 1) {
         return res.status(400).json({ message: 'Withdrawal limit reached' });
       }
 
@@ -28,11 +28,6 @@ withdrawalRouter.post('/withdraw', async (req, res) => {
 
     // Set withdrawal amount to the user's entire rewardAmount
     const withdrawalAmount = user.rewardAmount;
-
-     // Update withdrawal count for non-premium users
-     if (!user.isPremium) {
-        user.withdrawalCount += 1;
-      }
 
     // Update withdrawal status to "processing"
     user.withdrawalStatus = 'processing';
