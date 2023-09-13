@@ -102,7 +102,7 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       superAdmin.role = superAdmin.roleId ? superAdmin.roleId.name : "SuperAdmin";
   
       // Generate a JWT token
-      const token = signJwt({ id: superAdmin._id, email: superAdmin.email });
+      const token = signJwt({ id: superAdmin._id, email: superAdmin.email, userName: superAdmin.userName });
   
       // Save the updated superAdmin object
       await superAdmin.save();

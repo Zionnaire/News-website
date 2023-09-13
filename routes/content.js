@@ -85,7 +85,8 @@ contentRouter.get('/', async (req, res) => {
 
 contentRouter.post('/contents', verifyToken, async (req, res) => {
   try {
-    const { body, title, category } = req.body;
+    
+    const { body, title, category, isAdmin } = req.body;
     const files = Object.values(req.files); // Convert object to array
 
     if (!files || files.length === 0) {
@@ -109,7 +110,7 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
         videos.push(file);
       }
     });
-    // console.log(images, videos);
+ 
 
     // Check if a content with the same title and category already exists
     const existingContent = await Content.findOne({ title, category });
@@ -117,15 +118,16 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
     if (existingContent) {
       return res.status(409).json({ message: 'Content with the same title already exists', action: 'update' });
     }
-
+  
     const document = {
       title,
       category,
-      author: req.user.email, // Set the author as the username of the authenticated user
       images: [],
       videos:[],
+      author:req.user.userName,
       body,
     }
+
 
     for (const image of images) {
   if (image && image.mimetype && image.data) {
