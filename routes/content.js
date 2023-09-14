@@ -38,8 +38,6 @@ contentRouter.get("/", async (req, res) => {
   }
 }); 
 
-
-
 const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'image/svg+xml'];
 const allowedVideoTypes = ['video/mp4', 'audio/mpeg', 'audio/mp3'];
 
@@ -183,8 +181,6 @@ const uploadVideoToCloudinary = async (base64Video, folderPath) => {
   }
 };
 
-
-
 async function uploadToCloudinary(base64File, folder) {
   try {
     const { secure_url, public_id } = await cloudinary.uploader.upload(base64File, {folder});
@@ -272,7 +268,6 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 // Delete a specific content by ID
 contentRouter.delete('/contents', verifyToken, async (req, res) => {
