@@ -1,5 +1,6 @@
 const express = require('express');
 const Comment = require('../models/comment');
+const Content = require('../models/content')
 const commentRouter = express.Router();
 
 // Create a new comment for a specific content
