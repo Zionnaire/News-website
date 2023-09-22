@@ -269,6 +269,34 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
   }
 });
 
+
+contentRouter.post('/:id/make-premium', async (req, res) => {
+  try {
+    const contentId = req.params.id;
+     // Get the content ID from the URL parameter
+    const { isPremium } = req.body; // Get the isPremium value from the request body
+
+    // Find the content by ID
+    const content = await Content.findById(contentId);
+
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+
+    // Update the isPremium field
+    content.isPremium = isPremium;
+
+    // Save the updated content
+    await content.save();
+
+    res.status(200).json({ message: 'Content is now premium' });
+  } catch (error) {
+    console.error('Content Error:', error.message);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
 // Delete a specific content by ID
 contentRouter.delete('/contents', verifyToken, async (req, res) => {
   try {

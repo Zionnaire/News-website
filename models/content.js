@@ -17,7 +17,7 @@ const contentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  premium: {
+  isPremium: {
     type: Boolean,
     default: false,
   },
