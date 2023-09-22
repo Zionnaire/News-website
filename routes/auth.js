@@ -42,7 +42,7 @@ authRouter.post("/login", async (req, res) => {
       });
     }
 
-    let token = signJwt({ id: userExist._id, email: userExist.email });
+    let token = signJwt({ id: userExist._id, email: userExist.email, userName: userExist.firstName});
 
     return res.json({
       status: "00",

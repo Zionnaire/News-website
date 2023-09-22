@@ -21,15 +21,22 @@ const replySchema = new mongoose.Schema(
 
 const commentSchema = new mongoose.Schema(
   {
-    content: {
+    // content: {
+    //   type: String,
+    //   required: true
+    // },
+    // video: {
+    //   type: String
+    // },
+    // image: {
+    //   type: String
+    // },
+    contentId:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref: "Content"
+    },
+    comment:{
       type: String,
-      required: true
-    },
-    video: {
-      type: String
-    },
-    image: {
-      type: String
     },
     author: {
       type: String,

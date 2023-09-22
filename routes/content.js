@@ -273,6 +273,7 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
 contentRouter.post('/:id/make-premium', async (req, res) => {
   try {
     const contentId = req.params.id;
+    console.log(contentId)
      // Get the content ID from the URL parameter
     const { isPremium } = req.body; // Get the isPremium value from the request body
 
@@ -369,13 +370,22 @@ contentRouter.delete('/contents/:author/:title', verifyToken, async (req, res) =
 });
 
 // Add a comment to a specific content
-contentRouter.post('/contents/:id/comments',  async (req, res) => {
+contentRouter.post('/contents/:id/comments',verifyToken,  async (req, res) => {
   try {
-    const content = await Content.findById(req.query.id);
+    const userId = req.user.id; // Extract user ID from the verified token
+    const content = await Content.findById(req.params.id);
+    const {comment} = req.body
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
-    const newComment = await Comment.create(req.body);
+    let author
+    if(req.user.firstName){
+      author = req.user.firstName
+    }
+    else{
+      author = req.user.userName
+    }
+    const newComment = await Comment.create({contentId:req.params.id, user:userId,author:author, comment: comment});
     content.comments.push(newComment);
     await content.save();
     res.status(201).json(newComment);
