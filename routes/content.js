@@ -80,7 +80,6 @@ contentRouter.get('/', async (req, res) => {
 });
 
 //Create Contents
-
 contentRouter.post('/contents', verifyToken, async (req, res) => {
   try {
     
@@ -269,7 +268,6 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
   }
 });
 
-
 contentRouter.post('/:id/make-premium', async (req, res) => {
   try {
     const contentId = req.params.id;
@@ -296,7 +294,6 @@ contentRouter.post('/:id/make-premium', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 // Delete a specific content by ID
 contentRouter.delete('/contents', verifyToken, async (req, res) => {
@@ -370,30 +367,41 @@ contentRouter.delete('/contents/:author/:title', verifyToken, async (req, res) =
 });
 
 // Add a comment to a specific content
-contentRouter.post('/contents/:id/comments',verifyToken,  async (req, res) => {
+contentRouter.post('/contents/:id/comments', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id; // Extract user ID from the verified token
     const content = await Content.findById(req.params.id);
-    const {comment} = req.body
+    const { comment } = req.body;
+    
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
-    let author
-    if(req.user.firstName){
-      author = req.user.firstName
+    
+    let author;
+    
+    if (req.user.firstName && req.user.lastName) {
+      author = req.user.firstName + " " + req.user.lastName;
+    } else {
+      author = req.user.userName;
     }
-    else{
-      author = req.user.userName
-    }
-    const newComment = await Comment.create({contentId:req.params.id, user:userId,author:author, comment: comment});
+    
+    const newComment = await Comment.create({
+      contentId: req.params.id,
+      user: userId,
+      author: author,
+      comment: comment,
+    });
+    
     content.comments.push(newComment);
     await content.save();
+    
     res.status(201).json(newComment);
   } catch (error) {
     logger.error(error); // Log the error to the console
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 // Like a specific content
 contentRouter.post('/contents/:id/like', async (req, res) => {

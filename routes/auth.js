@@ -42,8 +42,12 @@ authRouter.post("/login", async (req, res) => {
       });
     }
 
-    let token = signJwt({ id: userExist._id, email: userExist.email, userName: userExist.firstName});
-
+    let token = signJwt({
+      id: userExist._id,
+      email: userExist.email,
+      firstName: userExist.firstName,
+      lastName: userExist.lastName, // Include lastName in the payload
+    });
     return res.json({
       status: "00",
       message: `Congratulations!! Welcome ${userExist.firstName}`,
