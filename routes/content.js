@@ -406,10 +406,11 @@ contentRouter.post('/contents/:id/comments', verifyToken, async (req, res) => {
 // Like a specific content
 contentRouter.post('/contents/:id/like', async (req, res) => {
   try {
-    const content = await Content.findById(req.query.id);
+    const content = await Content.findById(req.params.id);
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
+    content.likesCount += 1;
     content.likes.push(req.body.userId);
     await content.save();
     res.json({ message: 'Content liked successfully' });
@@ -419,10 +420,11 @@ contentRouter.post('/contents/:id/like', async (req, res) => {
   }
 });
 
+
 // Increment view count of a specific content
 contentRouter.post('/contents/:id/increment-views', async (req, res) => {
   try {
-    const content = await Content.findById(req.query.id);
+    const content = await Content.findById(req.params.id);
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }

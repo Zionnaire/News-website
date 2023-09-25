@@ -52,6 +52,10 @@ const contentSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  likesCount: {
+    type: Number,
+    default: 0, // Initialize the count to 0
+  },
   likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
