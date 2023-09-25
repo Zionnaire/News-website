@@ -438,12 +438,12 @@ contentRouter.post('/contents/:id/increment-views', async (req, res) => {
 // Create a reply for a specific comment
 contentRouter.post('/contents/:contentId/comments/:commentId/replies', async (req, res) => {
   try {
-    const content = await Content.findById(req.query.contentId);
+    const content = await Content.findById(req.params.contentId);
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
 
-    const comment = await Comment.findById(req.query.commentId);
+    const comment = await Comment.findById(req.params.commentId);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
@@ -473,17 +473,20 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', async (re
 // Delete a specific reply by ID
 contentRouter.delete('/contents/:contentId/comments/:commentId/replies/:replyId', async (req, res) => {
   try {
-    const content = await Content.findById(req.query.contentId);
+    const content = await Content.findById(req.params.contentId);
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
 
-    const comment = await Comment.findById(req.query.commentId);
+    const comment = await Comment.findById(req.params.commentId);
+    console.log(comment);
+    console.log(content);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    const reply = await Reply.findById(req.query.replyId);
+    const reply = await Reply.findById(req.params.replyId);
+    console.log(reply);
     if (!reply) {
       return res.status(404).json({ message: 'Reply not found' });
     }
@@ -494,7 +497,7 @@ contentRouter.delete('/contents/:contentId/comments/:commentId/replies/:replyId'
     }
 
     // Remove the reply ID from the comment's replies array
-    comment.replies = comment.replies.filter((r) => r.toString() !== req.params.replyId);
+    comment.replies = comment.replies.filter((r) => r.toString() !== req.query.replyId);
 
     // Save the updated comment
     await comment.save();

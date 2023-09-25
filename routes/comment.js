@@ -79,7 +79,7 @@ commentRouter.get('/', async (req, res) => {
 // Create a new reply to a comment
 commentRouter.post('/:commentId/replies', async (req, res) => {
   try {
-    const { content, user } = req.body;
+    const { body, user } = req.body;
     const { commentId } = req.params;
 
     const comment = await Comment.findById(commentId);
@@ -87,7 +87,7 @@ commentRouter.post('/:commentId/replies', async (req, res) => {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    const newReply = { content, user };
+    const newReply = { body, user };
     comment.replies.push(newReply);
     await comment.save();
 
