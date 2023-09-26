@@ -75,7 +75,6 @@ commentRouter.get('/', async (req, res) => {
   }
 });
 
-
 // Create a new reply to a comment
 commentRouter.post('/:commentId/replies', async (req, res) => {
   try {
@@ -97,29 +96,6 @@ commentRouter.post('/:commentId/replies', async (req, res) => {
   }
 });
 
-// Create a GET request to retrieve a specific reply under a specific comment
-// commentRouter.get('/:commentId/replies/:replyId', async (req, res) => {
-//   try {
-//     const { commentId, replyId } = req.params;
-
-//     const comment = await Comment.findById(commentId);
-//     if (!comment) {
-//       return res.status(404).json({ message: 'Comment not found' });
-//     }
-
-//     // Find the specific reply within the comment
-//     const reply = comment.replies.find((r) => r._id == replyId);
-
-//     if (!reply) {
-//       return res.status(404).json({ message: 'Reply not found' });
-//     }
-
-//     // Return both the body and ID of the reply
-//     res.status(200).json({ _id: reply._id, body: comment.replies.body });
-//   } catch (error) {
-//     res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// });
 
 // Get all replies of a comment
 commentRouter.get('/:commentId/replies', async (req, res) => {
