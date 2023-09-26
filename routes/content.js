@@ -459,8 +459,8 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', async (re
       body,
     });
 
-    // Add the reply ID to the comment's replies array
-    comment.replies.push(newReply._id);
+    // Add the reply ID and body to the comment's replies array
+    comment.replies.push(newReply);
 
     // Save the updated comment
     await comment.save();
@@ -471,6 +471,34 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', async (re
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+// Create a GET request to retrieve a specific reply under a specific comment
+contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', async (req, res) => {
+  try {
+    const content = await Content.findById(req.params.contentId);
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    // Find the specific reply within the comment
+    const reply = comment.replies.find((r) => r._id == req.params.replyId);
+
+    if (!reply) {
+      return res.status(404).json({ message: 'Reply not found' });
+    }
+
+    res.status(200).json({ body: reply.body });
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 
 // Delete a specific reply by ID
 contentRouter.delete('/contents/:contentId/comments/:commentId/replies/:replyId', async (req, res) => {
