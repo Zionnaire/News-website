@@ -74,6 +74,35 @@ userRouter.post(
   }
 );
 
+userRouter.get('/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const {role} = req.body
+
+    // Find the user by ID in the database
+    const user = await User.findById(userId);
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return the user data
+    return res.json({
+      Id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      roleId: user.roleId,
+      role
+    });
+  } catch (error) {
+    // Handle the error appropriately
+    console.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 //Get all Users
 userRouter.get('/users', async (req, res) => {
   try {

@@ -58,8 +58,8 @@ const contentSchema = new mongoose.Schema({
   },
   likes: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      whoLiked: String,
     },
   ],
   publishedStatus: {

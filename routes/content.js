@@ -2,6 +2,7 @@ const express = require('express');
 const  Content  = require('../models/content'); // Update the path to your models file
 const Comment = require('../models/comment');
 const Reply = require('../models/reply')
+const User = require('../models/users')
 const Admin = require('../models/admin')
 const { signJwt, verifyToken } = require("../middlewares/jwt");
 const { createLogger, transports, format } = require('winston');
@@ -404,21 +405,35 @@ contentRouter.post('/contents/:id/comments', verifyToken, async (req, res) => {
 
 
 // Like a specific content
-contentRouter.post('/contents/:id/like', async (req, res) => {
+contentRouter.post('/contents/:id/like', verifyToken, async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
+    const userId = req.user.id;
+    const user = req.user; // Get the user object from the verified token
+
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
+    // console.log(content);
+    // Check if the user has both firstName and lastName, and construct the name accordingly
+    const author = user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user.userName;
+
     content.likesCount += 1;
-    content.likes.push(req.body.userId);
+    
+    // Push an object containing userId and author (full name or username) to the likes array
+    content.likes.push({ userId: userId, whoLiked: author });
+    
     await content.save();
-    res.json({ message: 'Content liked successfully' });
+    
+    res.json({ author, message: 'Content liked successfully' });
   } catch (error) {
     logger.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 
 // Increment view count of a specific content
@@ -438,9 +453,12 @@ contentRouter.post('/contents/:id/increment-views', async (req, res) => {
 });
 
 // Create a reply for a specific comment
-contentRouter.post('/contents/:contentId/comments/:commentId/replies', async (req, res) => {
+contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyToken, async (req, res) => {
   try {
     const content = await Content.findById(req.params.contentId);
+    const userId = req.user.id;
+    const { author, body } = req.body;
+    const user = req.user; // Get the user object from the verified token
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
@@ -450,7 +468,11 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', async (re
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    const { author, body } = req.body;
+     // Check if the user has both firstName and lastName, and construct the name accordingly
+      author = user.firstName && user.lastName
+     ? `${user.firstName} ${user.lastName}`
+     : user.userName;
+
 
     // Create the new reply
     const newReply = await Reply.create({
