@@ -77,26 +77,25 @@ userRouter.post(
 userRouter.get('/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
-    const {role} = req.body
 
-    // Find the user by ID in the database
-    const user = await User.findById(userId);
+    // Find the user by ID in the database and populate the 'role' field
+    const user = await User.findById(userId).populate('roleId');
 
     // Check if the user exists
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Return the user data
+    // Return the user data with role name
     return res.json({
       Id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       roleId: user.roleId,
-      role
+      role: user.roleId.name, // Include the role name from the populated 'roleId'
     });
-  } catch (error) {
+  }  catch (error) {
     // Handle the error appropriately
     console.error(error);
     return res.status(500).json({ message: 'Internal Server Error' });
