@@ -103,7 +103,7 @@ userRouter.get('/:userId', async (req, res) => {
 });
 
 //Get all Users
-userRouter.get('/users', async (req, res) => {
+userRouter.get('/', async (req, res) => {
   try {
 
     const users = await User.find()
