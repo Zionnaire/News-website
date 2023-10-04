@@ -228,7 +228,7 @@ async function createContent(document, req, res) {
 // Get a specific content by ID
 contentRouter.get('/contents/:id', async (req, res) => {
   try {
-    const content = await Content.findById(req.query.id).populate('comments');
+    const content = await Content.findById(req.params.id).populate('comments');
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
@@ -272,10 +272,8 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
 contentRouter.post('/:id/make-premium', async (req, res) => {
   try {
     const contentId = req.params.id;
-    console.log(contentId)
      // Get the content ID from the URL parameter
     const { isPremium } = req.body; // Get the isPremium value from the request body
-
     // Find the content by ID
     const content = await Content.findById(contentId);
 
@@ -285,7 +283,7 @@ contentRouter.post('/:id/make-premium', async (req, res) => {
 
     // Update the isPremium field
     content.isPremium = isPremium;
-
+    console.log(req.body);
     // Save the updated content
     await content.save();
 
