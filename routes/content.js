@@ -457,7 +457,7 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyTok
   try {
     const content = await Content.findById(req.params.contentId);
     const userId = req.user.id;
-    const { author, body } = req.body;
+    let { author, body } = req.body;
     const user = req.user; // Get the user object from the verified token
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
