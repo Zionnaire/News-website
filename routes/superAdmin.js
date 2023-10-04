@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const User = require("../models/users");
 const Role = require("../models/role");
+const Admin = require("../models/admin")
 const { signJwt, verifyToken } = require("../middlewares/jwt");
 const { createLogger, transports, format } = require('winston');
 const { limiter } = require('../middlewares/rate-limit');
@@ -121,7 +122,56 @@ superAdminRouter.post("/admin/register", async (req, res) => {
     }
   });
 
-  superAdminRouter.post("/admin/make-admin", verifyToken, isSuperAdmin, async (req, res) => {
+  // superAdminRouter.post("/admin/make-admin", verifyToken, async (req, res) => {
+  //   try {
+  //     const userId = req.user.id;
+  
+  //     // Check if the authenticated user is a super admin
+  //     const superAdminExist = await SuperAdmin.findById(userId);
+  //     if (!superAdminExist) {
+  //       return res.status(403).json({ message: "Unauthorized access" });
+  //     }
+  
+  //     const { email } = req.body;
+  
+  //     const userExist = await User.findOne({ email: email });
+  //     if (!userExist) {
+  //       logger.error(`User not found: ${email}`);
+  //       return res.status(404).json({ message: "User not found" });
+  //     }
+  
+  //     // Check if the user already has the role of "Admin"
+  //     if (userExist.role === "Admin") {
+  //       return res.status(409).json({ message: "User is already an admin" });
+  //     }
+
+
+  //   // Update the user's role to "Admin" in the Admin model
+  //   const admin = await Admin.findOne({ email: email });
+  //   if (admin) {
+  //     admin.role = "Admin";
+  //     await admin.save();
+  //   }
+  
+  //     // Update the user's role to "Admin"
+  //     userExist.role = "Admin";
+  //     await userExist.save();
+  //     console.log('User role updated to Admin:', userExist);
+  
+  //     return res.json({
+  //       message: `User ${userExist.firstName} has been made an admin`,
+  //       userName: userExist.userName,
+  //       email: userExist.email,
+  //       role: "Admin"
+  //     });
+  //   } catch (error) {
+  //     logger.error(error);
+  //     return res.status(500).json({ message: "Internal Server Error" });
+  //   }
+  // });
+  
+
+  superAdminRouter.post("/admin/make-admin", verifyToken, async (req, res) => {
     try {
       const userId = req.user.id;
   
@@ -133,36 +183,64 @@ superAdminRouter.post("/admin/register", async (req, res) => {
   
       const { email } = req.body;
   
+      // Check if there is already an admin with the given email
+      const existingAdmin = await Admin.findOne({ email: email });
+  
+      if (existingAdmin) {
+        return res.status(409).json({ message: "User is already an admin" });
+      }
+  
       const userExist = await User.findOne({ email: email });
       if (!userExist) {
         logger.error(`User not found: ${email}`);
         return res.status(404).json({ message: "User not found" });
       }
   
-      // Check if the user already has the role of "Admin"
-      if (userExist.role === "Admin") {
-        return res.status(409).json({ message: "User is already an admin" });
+      // Update the user's role to "Admin" in the Admin model
+      const admin = await Admin.findOneAndUpdate(
+        { email: email },
+        { $set: { role: "Admin" } },
+        { new: true }
+      ).populate('roleId');
+  
+      if (!admin) {
+        // If Admin document doesn't exist, create a new one using user's data
+        const newUserAdmin = new Admin({
+          firstName: userExist.firstName,
+          lastName: userExist.lastName,
+          email: userExist.email,
+          password: userExist.password, // Assuming you want to copy the password as well, adjust accordingly
+          // Copy other relevant fields as needed
+          role: "Admin",
+        });
+  
+        await newUserAdmin.save(); // Save the new Admin document
       }
   
       // Update the user's role to "Admin"
       userExist.role = "Admin";
       await userExist.save();
   
+      console.log('Admin:', admin); // Add this line for logging
       return res.json({
         message: `User ${userExist.firstName} has been made an admin`,
         userName: userExist.userName,
         email: userExist.email,
-        role: "Admin"
+        role: admin ? admin.role : "Admin", // Handle the case when admin is null
+        adminDetails: admin,
       });
     } catch (error) {
-      logger.error(error);
+      console.error('Error during make-admin operation:', error);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   });
   
   
+  
+  
+  
 
-  superAdminRouter.post("/admin/approve-withdrawal", verifyToken, isSuperAdmin, async (req, res) => {
+  superAdminRouter.post("/admin/approve-withdrawal", verifyToken, async (req, res) => {
     try {
       const userId = req.user.id;
   
@@ -227,19 +305,20 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       const user = await User.findOne({ email });
   
       if (!user) {
-        return res.status(404).json({ message: `User ${user.email} not found` });
+        return res.status(404).json({ message: `User ${email} not found` });
       }
   
       // Logic to remove the user
       await User.findByIdAndRemove(user._id);
       return res.json({
-        message: `User ${user.email} has been removed`
+        message: `User ${email} has been removed`,
       });
     } catch (error) {
-      logger.error(error)
+      console.error('Error during remove-user operation:', error);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   });
+  
   
 
 

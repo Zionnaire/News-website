@@ -4,20 +4,20 @@ const Admin = require('../models/admin')
 const { signJwt, verifyToken } = require("../middlewares/jwt");
 const { isAdmin } = require("../middlewares/authAccess");
 
-const users = require('../models/users')
+const User = require('../models/users')
 const adminRouter = express.Router()
 
 
 adminRouter.post('/login', async (req, res) => {
     try {
-      console.log(req.body);
-      const { email, password } = req.body;
+       const { email, password } = req.body;
   
       let admin = await Admin.findOne({ email: email });
+      const user = await User.findOne({ email: email });
   
       console.log(admin);
   
-      if (admin == null) {
+      if (!admin|| !user ) {
         return res.json({
           message: "User with this email does not exist",
         });
@@ -30,7 +30,7 @@ adminRouter.post('/login', async (req, res) => {
         });
       }
   
-      var token = signJwt({ id: admin._id, email: admin.email });
+      var token = signJwt({ id: admin._id || user._id, email: admin.email || user.email });
       return res.json({
         status: true,
         message: "User logged in successfully",
@@ -39,7 +39,7 @@ adminRouter.post('/login', async (req, res) => {
           lastName: admin.lastName,
           email: admin.email,
           token,
-          role: admin.role, // Assuming 'role' is a property of the 'admin' object
+          role: admin.role || user.role, // Assuming 'role' is a property of the 'admin' object
         },
       });
     } catch (error) {
