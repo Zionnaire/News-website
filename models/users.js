@@ -1,32 +1,32 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    firstName: String,
-    lastName: String,
+  firstName: String,
+  lastName: String,
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
-  cPassword:{
+  cPassword: {
     type: String,
     require: true,
   },
   roleId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Role'
+    ref: 'Role',
   },
   isPremium: {
     type: Boolean,
-    default: false
+    default: false,
   },
   rewardAmount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   withdrawalCount: {
     type: [
@@ -34,14 +34,25 @@ const userSchema = new mongoose.Schema({
         accountNumber: String,
         bankName: String,
         amount: Number,
-        date:{
+        date: {
           type: String,
-          default: new Date().getTime()
-        }
-      }
-    ]
+          default: new Date().getTime().toString(),
+        },
+      },
+    ],
+    default: [], // Set as an empty array by default
+  },
+  userImage: [{
+    type: {
+      url: { type: String },
+      cld_id: { type: String },
+    },
+  }],
+  contentStartTime: {
+    type: String,
+    default: new Date().getTime().toString(),
   }
-});
+}, { timestamps: true }) ;
 
 const User = mongoose.model('User', userSchema);
 

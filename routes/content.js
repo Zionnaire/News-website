@@ -84,7 +84,7 @@ contentRouter.get('/', async (req, res) => {
 contentRouter.post('/contents', verifyToken, async (req, res) => {
   try {
     
-    const { body, title, category, isAdmin } = req.body;
+    const { body, title, category} = req.body;
     const files = Object.values(req.files); // Convert object to array
 
     if (!files || files.length === 0) {

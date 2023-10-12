@@ -47,6 +47,7 @@ authRouter.post("/login", async (req, res) => {
       email: userExist.email,
       firstName: userExist.firstName,
       lastName: userExist.lastName, // Include lastName in the payload
+      userImage: userExist.userImage 
     });
     return res.json({
       status: "00",
@@ -54,6 +55,7 @@ authRouter.post("/login", async (req, res) => {
       firstName: userExist.firstName,
       lastName: userExist.lastName,
       email: userExist.email,
+      id: userExist.id,
       role: userExist.roleId ? userExist.roleId.name : "Regular", // Access the role name, default to "Regular" if roleId is not set
       token
     });
