@@ -8,7 +8,7 @@ const replySchema = new mongoose.Schema({
   author: {
     type: String,
    },
-  body: {
+  replyBody: {
     type: String,
     required: true,
   },

@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
   rewardAmount: {
     type: Number,
     default: 0,
@@ -52,7 +56,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: new Date().getTime().toString(),
   }
-}, { timestamps: true }) ;
+}, 
+
+{ timestamps: true }) ;
 
 const User = mongoose.model('User', userSchema);
 

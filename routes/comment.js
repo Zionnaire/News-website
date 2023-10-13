@@ -76,25 +76,49 @@ commentRouter.get('/', async (req, res) => {
 });
 
 // Create a new reply to a comment
-commentRouter.post('/:commentId/replies', async (req, res) => {
+commentRouter.post('/:commentId/replies', verifyToken, async (req, res) => {
   try {
-    const { body, user } = req.body;
+    const { replyBody } = req.body;
     const { commentId } = req.params;
+    const userId = req.user.id; // Extract user ID from the verified token
+
+    // Find the user based on the user ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     const comment = await Comment.findById(commentId);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    const newReply = { body, user };
+    // Determine the author based on user properties
+    let author = user.userName || user.firstName; // Default to userName or firstName
+
+    const newReply = { replyBody, user, author };
     comment.replies.push(newReply);
     await comment.save();
 
-    res.status(201).json(newReply);
+    // Return the user who replied with the reply content
+    const updatedComment = await Comment.findById(commentId).populate('replies.user', 'userName firstName');
+    
+    // Check if the user exists and has _id before trying to find the replied user
+    const repliedUser = user && user._id
+      ? updatedComment.replies.find(reply => reply.user && reply.user._id && reply.user._id.toString() === user._id.toString())
+      : null;
+
+    res.status(201).json({ repliedUser, replyBody });
   } catch (error) {
+    console.error(error); // Log the error to the console for debugging
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
+
+
 
 
 // Get all replies of a comment

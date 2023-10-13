@@ -128,53 +128,57 @@ superAdminRouter.post("/admin/register", async (req, res) => {
         return res.status(403).json({ message: "Unauthorized access" });
       }
   
-      const { email } = req.body;
-  
-      // Check if there is already an admin with the given email
-      const existingAdmin = await Admin.findOne({ email: email });
-  
-      if (existingAdmin) {
-        return res.status(409).json({ message: "User is already an admin" });
-      }
-  
+      const { email,toggle } = req.body;
+
       const userExist = await User.findOne({ email: email });
       if (!userExist) {
         logger.error(`User not found: ${email}`);
         return res.status(404).json({ message: "User not found" });
       }
+
+         // Check if there is already an admin with the given email
+         const existingAdmin = await Admin.findOne({ email: email });
   
+         if (existingAdmin) {
+           return res.status(409).json({ message: "User is already an admin" });
+         }
+      if(toggle == userExist.isAdmin) return res.status(409).json({ message: "IsAdmin has already been set to "+ toggle });
+
       // Update the user's role to "Admin" in the Admin model
-      const admin = await Admin.findOneAndUpdate(
-        { email: email },
-        { $set: { role: "Admin" } },
-        { new: true }
-      ).populate('roleId');
+      userExist.isAdmin = toggle
+    
+      // const admin = await Admin.findOneAndUpdate(
+      //   { email: email },
+      //   { $set: { role: "Admin" } },
+      //   { new: true }
+      // ).populate('roleId');
   
-      if (!admin) {
-        // If Admin document doesn't exist, create a new one using user's data
-        const newUserAdmin = new Admin({
-          firstName: userExist.firstName,
-          lastName: userExist.lastName,
-          email: userExist.email,
-          password: userExist.password, // Assuming you want to copy the password as well, adjust accordingly
-          // Copy other relevant fields as needed
-          role: "Admin",
-        });
+      // if (!admin) {
+      //   // If Admin document doesn't exist, create a new one using user's data
+      //   const newUserAdmin = new Admin({
+      //     firstName: userExist.firstName,
+      //     lastName: userExist.lastName,
+      //     email: userExist.email,
+      //     password: userExist.password, // Assuming you want to copy the password as well, adjust accordingly
+      //     // Copy other relevant fields as needed
+      //     role: "Admin",
+      //   });
   
-        await newUserAdmin.save(); // Save the new Admin document
-      }
+      //   await newUserAdmin.save(); // Save the new Admin document
+      // }
   
-      // Update the user's role to "Admin"
-      userExist.role = "Admin";
+      // // Update the user's role to "Admin"
+      // userExist.role = "Admin";
       await userExist.save();
   
-      console.log('Admin:', admin); // Add this line for logging
+      // console.log('Admin:', admin); // Add this line for logging
       return res.json({
         message: `User ${userExist.firstName} has been made an admin`,
         userName: userExist.userName,
         email: userExist.email,
-        role: admin ? admin.role : "Admin", // Handle the case when admin is null
-        adminDetails: admin,
+        //role: admin ? admin.role : "Admin", // Handle the case when admin is null
+        //adminDetails: admin,
+        isAdmin : userExist.isAdmin
       });
     } catch (error) {
       console.error('Error during make-admin operation:', error);
