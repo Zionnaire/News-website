@@ -511,45 +511,45 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyTok
 // Create a GET request to retrieve a specific reply under a specific comment
 contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', verifyToken, async (req, res) => {
   try {
+    // Destructure parameters
     const { contentId, commentId, replyId } = req.params;
 
+    // Find content, comment, and reply
     const content = await Content.findById(contentId);
-
-    if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
-    }
-
     const comment = await Comment.findById(commentId);
-
-    if (!comment) {
-      return res.status(404).json({ message: 'Comment not found' });
-    }
-
     const reply = await Reply.findById(replyId);
 
-    if (!reply) {
-      return res.status(404).json({ message: 'Reply not found' });
+    // Ensure content, comment, and reply exist
+    if (!content || !comment || !reply) {
+      return res.status(404).json({ message: 'Resource not found' });
     }
 
-    // Log information for debugging
-    console.log('Reply.user:', reply.user);
-    
-    // Check if reply.user exists before accessing its properties
-    const user = reply.user ? await User.findById(reply.user) : null;
+    // Ensure req.user is defined
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
-    // Log user information for debugging
-    console.log('User:', user);
+    // Extract user information
+    const { firstName, lastName, userName, id: userId } = req.user;
 
+    // Find user
+    const user = await User.findById(userId);
+
+    // Ensure user exists
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Determine the reply author based on user properties
+    const replyAuthor = user.firstName && user.lastName
+      ? `${firstName} ${lastName}`
+      : userName;
+
+    // Respond with reply details
     res.status(200).json({
       replyId: reply._id,
       replyBody: reply.replyBody,
-      author: user.firstName && user.lastName
-        ? `${user.firstName} ${user.lastName}`
-        : user.userName,
+      replyAuthor,
     });
 
   } catch (error) {
@@ -558,6 +558,8 @@ contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', v
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
 
 
 // Delete a specific reply by ID
