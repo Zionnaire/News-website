@@ -481,8 +481,11 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyTok
 
     // Create the new reply
     const newReply = await Reply.create({
+      comment: comment._id,
       replyBody,
+      user: req.user.id,  // Ensure user is associated with the reply
     });
+    
 
     // Add the reply ID and body to the comment's replies array
     comment.replies.push(newReply);
@@ -506,27 +509,51 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyTok
 
 
 // Create a GET request to retrieve a specific reply under a specific comment
-contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', async (req, res) => {
+contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', verifyToken, async (req, res) => {
   try {
-    const content = await Content.findById(req.params.contentId);
+    const { contentId, commentId, replyId } = req.params;
+
+    const content = await Content.findById(contentId);
+
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
 
-    const comment = await Comment.findById(req.params.commentId);
+    const comment = await Comment.findById(commentId);
+
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    // Find the specific reply within the comment
-    const reply = comment.replies.find((r) => r._id == req.params.replyId);
+    const reply = await Reply.findById(replyId);
 
     if (!reply) {
       return res.status(404).json({ message: 'Reply not found' });
     }
 
-    res.status(200).json({ body: reply.body });
+    // Log information for debugging
+    console.log('Reply.user:', reply.user);
+    
+    // Check if reply.user exists before accessing its properties
+    const user = reply.user ? await User.findById(reply.user) : null;
+
+    // Log user information for debugging
+    console.log('User:', user);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      replyId: reply._id,
+      replyBody: reply.replyBody,
+      author: user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : user.userName,
+    });
+
   } catch (error) {
+    console.error('Error in get request:', error);
     logger.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }

@@ -5,9 +5,10 @@ const replySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Comment',
   },
-  author: {
-    type: String,
-   },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
   replyBody: {
     type: String,
     required: true,
