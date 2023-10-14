@@ -115,12 +115,7 @@ commentRouter.post('/:commentId/replies', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
-
-
-
-
-
+ 
 // Get all replies of a comment
 commentRouter.get('/:commentId/replies', async (req, res) => {
   try {

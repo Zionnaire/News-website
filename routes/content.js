@@ -454,29 +454,34 @@ contentRouter.post('/contents/:id/increment-views', async (req, res) => {
 contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyToken, async (req, res) => {
   try {
     const content = await Content.findById(req.params.contentId);
-    const userId = req.user.id;
-    let { author, body } = req.body;
-    const user = req.user; // Get the user object from the verified token
+    const {author, replyBody } = req.body;
+    const { firstName, lastName, userName } = req.user;
+    const userId = req.user.id; // Extract user ID from the verified token
+
+    const user = await User.findById(userId);
+
+    // Find the comment based on the comment ID
+    const comment = await Comment.findById(req.params.commentId);
+
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
 
-    const comment = await Comment.findById(req.params.commentId);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-     // Check if the user has both firstName and lastName, and construct the name accordingly
-      author = user.firstName && user.lastName
-     ? `${user.firstName} ${user.lastName}`
-     : user.userName;
+    // Determine the reply author based on user properties
+    const replyAuthor = user.firstName && user.lastName
+      ? `${firstName} ${lastName}`
+      : userName;
+
+    // Use the user information associated with the comment as the author
 
 
     // Create the new reply
     const newReply = await Reply.create({
-      comment: comment._id,
-      author,
-      body,
+      replyBody,
     });
 
     // Add the reply ID and body to the comment's replies array
@@ -485,12 +490,20 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyTok
     // Save the updated comment
     await comment.save();
 
-    res.status(201).json(newReply);
+    res.status(201).json({
+      commentId: comment._id,
+      comment: comment.comment,
+      author: comment.author,
+      newReply,
+      replyAuthor,
+    });
   } catch (error) {
     logger.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
 
 // Create a GET request to retrieve a specific reply under a specific comment
 contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', async (req, res) => {
