@@ -9,6 +9,7 @@ const { createLogger, transports, format } = require('winston');
 const SuperAdmin = require('../models/superAdmin');
 const contentRouter = express.Router();
 const cloudinary = require('cloudinary').v2
+const mongoose = require('mongoose')
 
 // Configure Winston logger
 const logger = createLogger({
@@ -476,21 +477,17 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyTok
       ? `${firstName} ${lastName}`
       : userName;
 
-    // Use the user information associated with the comment as the author
-
-
     // Create the new reply
     const newReply = await Reply.create({
       comment: comment._id,
       replyBody,
       user: req.user.id,  // Ensure user is associated with the reply
     });
-    
 
     // Add the reply ID and body to the comment's replies array
     comment.replies.push(newReply);
-
     // Save the updated comment
+  
     await comment.save();
 
     res.status(201).json({
@@ -505,8 +502,6 @@ contentRouter.post('/contents/:contentId/comments/:commentId/replies', verifyTok
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
-
 
 // Create a GET request to retrieve a specific reply under a specific comment
 contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', verifyToken, async (req, res) => {
@@ -559,11 +554,8 @@ contentRouter.get('/contents/:contentId/comments/:commentId/replies/:replyId', v
   }
 });
 
-
-
-
 // Delete a specific reply by ID
-contentRouter.delete('/contents/:contentId/comments/:commentId/replies/:replyId', async (req, res) => {
+contentRouter.delete('/contents/:contentId/comments/:commentId/replies/:replyId', verifyToken, async (req, res) => {
   try {
     const content = await Content.findById(req.params.contentId);
     if (!content) {
@@ -571,38 +563,44 @@ contentRouter.delete('/contents/:contentId/comments/:commentId/replies/:replyId'
     }
 
     const comment = await Comment.findById(req.params.commentId);
-    console.log(comment);
-    console.log(content);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
     const reply = await Reply.findById(req.params.replyId);
-    console.log(reply);
     if (!reply) {
       return res.status(404).json({ message: 'Reply not found' });
     }
 
     // Check if the user deleting the reply is the reply's author
-    if (reply.author.toString() !== req.user.id) {
+    if (reply.user.toString() !== req.user.id) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // Remove the reply ID from the comment's replies array
-    comment.replies = comment.replies.filter((r) => r.toString() !== req.query.replyId);
+    // Remove the reply from the comment's replies array
+    comment.replies = comment.replies.filter(r => r.toString() !== req.params.replyId);
+     // Remove the reply from the comment's replies array
+     comment.replies.pull({ _id: req.params.replyId });
 
     // Save the updated comment
     await comment.save();
 
-    // Delete the reply from the database
-    await reply.remove();
+    // Delete the reply from the database using deleteOne
+    const result = await Reply.deleteOne({ _id: req.params.replyId });
 
-    res.json({ message: 'Reply deleted successfully' });
+    console.log(result); // Log the result to see if the delete operation was successful
+
+    if (result.deletedCount > 0) {
+      res.json({ message: 'Reply deleted successfully' });
+    } else {
+      res.status(500).json({ message: 'Internal Server Error: Unable to delete reply' });
+    }
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 
 module.exports = contentRouter;

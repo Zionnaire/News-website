@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const replySchema = new mongoose.Schema(
   {
-    body: {
+    replyBody: {
       type: String,
     },
     user: {

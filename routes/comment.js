@@ -116,21 +116,80 @@ commentRouter.get('/', async (req, res) => {
 //   }
 // });
  
-// Get all replies of a comment
+//Get all replies of a comment
 commentRouter.get('/:commentId/replies', async (req, res) => {
   try {
     const { commentId } = req.params;
 
-    const comment = await Comment.findById(commentId);
+    const comment = await Comment.findById(commentId).populate('replies.user', 'firstName lastName userName');
+
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    const replies = comment.replies;
+    const replies = comment.replies.map(reply => {
+      const replyAuthor =
+        (reply.user && reply.user.firstName && reply.user.lastName)
+        ? `${reply.user.firstName} ${reply.user.lastName}`
+        : (reply.user && reply.user.userName)
+          ? reply.user.userName
+          : 'Unknown User';
+
+      return {
+        replyBody: reply.replyBody || '',
+        replyAuthor,
+        createdAt: reply.createdAt,
+        _id: reply._id,
+        updatedAt: reply.updatedAt,
+      };
+    });
+
     res.json(replies);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
+
+
+// commentRouter.get('/:commentId/replies', async (req, res) => {
+//   try {
+//     const { commentId } = req.params;
+
+//     const comment = await Comment.findById(commentId).populate({
+//       path: 'replies',
+//       populate: {
+//         path: 'reply',
+//         select: 'replyBody',
+//       },
+//     });
+
+//     if (!comment) {
+//       return res.status(404).json({ message: 'Comment not found' });
+//     }
+
+//     const replies = comment.replies.map(reply => ({
+//       _id: reply._id,
+//       user: reply.user,
+//       createdAt: reply.createdAt,
+//       updatedAt: reply.updatedAt,
+//       replyBody: reply.body,
+//       comment: reply.comment, // Assuming 'comment' is a reference in your Reply model
+//     }));
+
+//     res.json(replies);
+//   } catch (error) {
+//     console.error('Error fetching comment or replies:', error);
+//     res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// });
+
+
+
+
+
+
 
 module.exports = commentRouter;
