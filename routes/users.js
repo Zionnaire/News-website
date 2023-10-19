@@ -226,33 +226,54 @@ return res.json({
 );
 
 
-// Assume you have a route to mark the start of content viewing
-userRouter.post('/content/:userId/start', async (req, res) => {
-  const userId = req.params.userId; // Assuming user ID is available after authentication
-  const contentId = req.body.contentId; // Assuming content ID is sent in the request body
+// Route to reward a user after clicking content 
+userRouter.post('/content/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  const contentId = req.body.contentId;
 
   // Find content
   const content = await Content.findById(contentId);
   if (!content) {
-    return res.status(404).json({ message: 'content not found' });
+    return res.status(404).json({ message: 'Content not found' });
   }
 
   try {
-    // Save the current timestamp in the user's document (you should have a User model)
-    const user = await User.findOneAndUpdate(
-      { _id: userId },
-      { $set: { contentStartTime: new Date() } },
-      { new: true }
-    );
-
+    // Find the user
+    let user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Log the content start time for debugging
-    console.log('Content Start Time:', user.contentStartTime);
+    //console.log('User before update:', user); // Add this log
 
-    return res.json({ message: 'Content viewing started', contentStartTime: user.contentStartTime });
+    // Initialize rewardedContents array if it doesn't exist
+    if (!user.rewardedContents) {
+      user.rewardedContents = [];
+    }
+
+    //console.log('Rewarded contents before update:', user.rewardedContents); // Add this log
+
+    // Check if the user has already been rewarded for this content
+    if (user.rewardedContents.includes(contentId)) {
+      return res.status(400).json({ message: 'User has already been rewarded for this content' });
+    }
+
+    // Update the rewardAmount and add the content to the rewarded list
+    user.rewardAmount += 0.12;
+    user.rewardedContents.push(contentId);
+
+    console.log('User after update:', user); // Add this log
+
+    // Save the updated user document
+    user = await user.save();
+
+    //console.log('User after save:', user); // Add this log
+
+    return res.json({
+      message: 'User rewarded successfully',
+      userId: user._id,
+      rewardAmount: user.rewardAmount,
+    });
   } catch (error) {
     console.error('Error in start API:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
@@ -261,73 +282,100 @@ userRouter.post('/content/:userId/start', async (req, res) => {
 
 
 
+// Assume you have a route to mark the start of content viewing
+// userRouter.post('/content/:userId/start', async (req, res) => {
+//   const userId = req.params.userId; // Assuming user ID is available after authentication
+//   const contentId = req.body.contentId; // Assuming content ID is sent in the request body
 
+//   // Find content
+//   const content = await Content.findById(contentId);
+//   if (!content) {
+//     return res.status(404).json({ message: 'content not found' });
+//   }
+
+//   try {
+//     // Save the current timestamp in the user's document (you should have a User model)
+//     const user = await User.findOneAndUpdate(
+//       { _id: userId },
+//       { $set: { contentStartTime: new Date() } },
+//       { new: true }
+//     );
+
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+
+//     // Log the content start time for debugging
+//     console.log('Content Start Time:', user.contentStartTime);
+
+//     return res.json({ message: 'Content viewing started', contentStartTime: user.contentStartTime });
+//   } catch (error) {
+//     console.error('Error in start API:', error);
+//     return res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// });
 
 // Route to mark the end of content viewing
-userRouter.post('/content/:userId/end', async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const contentId = req.body.contentId;
+// userRouter.post('/content/:userId/end', async (req, res) => {
+//   try {
+//     const userId = req.params.userId;
+//     const contentId = req.body.contentId;
 
-    // Find content
-    const content = await Content.findById(contentId);
-    if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
-    }
+//     // Find content
+//     const content = await Content.findById(contentId);
+//     if (!content) {
+//       return res.status(404).json({ message: 'Content not found' });
+//     }
 
-    // Find the user and get the content start time
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+//     // Find the user and get the content start time
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
 
-    const contentStartTime = user.contentStartTime;
+//     const contentStartTime = user.contentStartTime;
 
-    if (!contentStartTime) {
-      return res.status(400).json({ message: 'Content start time not recorded' });
-    }
+//     if (!contentStartTime) {
+//       return res.status(400).json({ message: 'Content start time not recorded' });
+//     }
 
-    // Calculate the duration in minutes
-    const currentTime = new Date();
-    const durationInMinutes = (currentTime - new Date(contentStartTime)) / (1000 * 60);
+//     // Calculate the duration in minutes
+//     const currentTime = new Date();
+//     const durationInMinutes = (currentTime - new Date(contentStartTime)) / (1000 * 60);
 
-    // Reward the user if the duration is at least one minute
-    if (durationInMinutes >= 1) {
-      const rewardPerContent = 0.12;
-      // Update the rewardAmount
-      user.rewardAmount += rewardPerContent;
+//     // Reward the user if the duration is at least one minute
+//     if (durationInMinutes >= 1) {
+//       const rewardPerContent = 0.12;
+//       // Update the rewardAmount
+//       user.rewardAmount += rewardPerContent;
 
-      // Reset the contentStartTime
-      user.contentStartTime = null;
+//       // Reset the contentStartTime
+//       user.contentStartTime = null;
 
-      // Save the updated user document
-      await user.save();
+//       // Save the updated user document
+//       await user.save();
 
-      return res.json({
-        message: 'User rewarded successfully',
-        userId: user._id,
-        rewardAmount: user.rewardAmount,
-      });
-    } else {
-      return res.status(400).json({ message: 'Duration must be at least one minute' });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
-
+//       return res.json({
+//         message: 'User rewarded successfully',
+//         userId: user._id,
+//         rewardAmount: user.rewardAmount,
+//       });
+//     } else {
+//       return res.status(400).json({ message: 'Duration must be at least one minute' });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// });
 
 // Helper function to calculate the duration in minutes
-function calculateDuration(startTime) {
-  const endTime = new Date();
-  const timeDifference = endTime - startTime; // in milliseconds
-  const durationInMinutes = timeDifference / (1000 * 60); // convert to minutes
-  return durationInMinutes;
-}
-
-
+// function calculateDuration(startTime) {
+//   const endTime = new Date();
+//   const timeDifference = endTime - startTime; // in milliseconds
+//   const durationInMinutes = timeDifference / (1000 * 60); // convert to minutes
+//   return durationInMinutes;
+// }
 
 // Helper function to upload image to Cloudinary
 async function uploadToCloudinary(base64File, folder) {
@@ -341,8 +389,6 @@ async function uploadToCloudinary(base64File, folder) {
     throw error;
   }
 }
-
-
 
 
 module.exports = userRouter;

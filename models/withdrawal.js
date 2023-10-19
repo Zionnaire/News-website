@@ -7,11 +7,10 @@ const withdrawalSchema = new mongoose.Schema({
   },
   available: {
     type: Number,
-    required: true,
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
+    enum: ['pending', 'processing', 'approved', 'processed', 'rejected'],
     default: 'pending',
   },
   count:{

@@ -14,6 +14,8 @@ const contentRouter = require('./routes/content');
 const renderRouter = require("./routes/renderActive");
 const superAdminRouter = require("./routes/superAdmin");
 const categoryRouter = require("./routes/category");
+const withdrawalRouter = require("./routes/withdrawal");
+const withdrawalHistoryRouter = require("./routes/withdrawHistory");
 
 
 const port = process.env.PORT || 4000;
@@ -33,6 +35,8 @@ app.use('/api/v1/contents', contentRouter);
 app.use('/api/v1/', renderRouter);
 app.use('/api/v1/superAdmin', superAdminRouter);
 app.use('/api/v1/category', categoryRouter);
+app.use('/api/v1/withdraw', withdrawalRouter)
+app.use('/api/v1', withdrawalHistoryRouter)
 
 connectDB();
 app.listen(port, () => {

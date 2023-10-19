@@ -32,12 +32,30 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+
   withdrawalCount: {
     type: [
       {
         accountNumber: String,
         bankName: String,
         amount: Number,
+        withdrawalType: {
+          type: String,
+          enum: 'bank'
+        },
+        date: {
+          type: String,
+          default: new Date().getTime().toString(),
+        },
+      },
+      {
+        cryptoAddress: String,
+        cryptoName: String,
+        amount: Number,
+        withdrawalType: {
+          type: String,
+          enum: 'crypto'
+        },
         date: {
           type: String,
           default: new Date().getTime().toString(),
@@ -45,6 +63,11 @@ const userSchema = new mongoose.Schema({
       },
     ],
     default: [], // Set as an empty array by default
+  },
+  withdrawalStatus:{
+    type: String,
+    enum: ['pending', 'processing', 'approved', 'rejected'],
+    default: 'pending',
   },
   userImage: [{
     type: {
@@ -55,6 +78,15 @@ const userSchema = new mongoose.Schema({
   contentStartTime: {
     type: String,
     default: new Date().getTime().toString(),
+  },
+  rewardedContents: {
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Content',
+      },
+    ],
+    default: [],
   }
 }, 
 
