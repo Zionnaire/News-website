@@ -94,16 +94,19 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
     if (isApproved) {
       // Deduct the amount only if the withdrawal is approved
       user.rewardAmount -= amount;
-      user.withdrawalStatus = 'approved';
+      user.withdrawalStatus = 'processing';
       await user.save();
 
-      withdrawalRecord.status = 'approved';
+      withdrawalRecord.status = 'processing';
 
       // Response includes details of the transaction
       return res.status(200).json({
-        message: 'Withdrawal approved',
-        status: 'approved',
-        withdrawalDetails: withdrawalCountItem,
+        message: 'Withdrawal processing',
+        status: 'pending',
+        withdrawalDetails: {
+            ...withdrawalCountItem,
+            date: withdrawalRecord.details[0].date, // Access the date from the details array
+        },
       });
     } else {
       user.withdrawalStatus = 'processing';

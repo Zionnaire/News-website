@@ -192,6 +192,7 @@ superAdminRouter.post("/admin/register", async (req, res) => {
   
       // Check if the authenticated user is a super admin
       const superAdminExist = await SuperAdmin.findById(userId);
+      const user = await User.findById(userId);
       if (!superAdminExist) {
         return res.status(403).json({ message: "Unauthorized access" });
       }
@@ -204,26 +205,34 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       if (!withdrawal) {
         return res.status(404).json({ message: "Withdrawal not found" });
       }
+
+      // Check if the withdrawal is already approved
+      if (withdrawal.status === "approved") {
+        return res.status(409).json({ message: "Withdrawal is already approved" });
+    }
   
-      if (superAdminExist.premium === true) {
+      if (user.isPremium === true) {
         // Super admin logic to approve the withdrawal
-        // ...
-        return res.json({
-          message: "Withdrawal approved"
-        });
+ withdrawal.status = "approved";
+ await withdrawal.save();
+ return res.json({
+  message: "Withdrawal approved",
+  withdrawalDetails: withdrawal,
+});
       } else {
         // Check if the user has a role of "Regular" and if the withdrawal amount is not greater than one
-        const user = await User.findById(userId);
         if (!user) {
           return res.status(404).json({ message: "User not found" });
         }
   
-        if (user.role === "Regular" && withdrawal.count <= 1) {
+        if (user.isPremium === false && withdrawal.count < 1) {
           // Regular user logic to approve the withdrawal
-          // ...
+          withdrawal.status = "approved";
+          await withdrawal.save();
           return res.json({
-            message: "Withdrawal approved"
-          });
+           message: "Withdrawal approved",
+           withdrawalDetails: withdrawal,
+         });
         } else {
           return res.status(403).json({ message: "Withdrawal cannot be approved" });
         }
