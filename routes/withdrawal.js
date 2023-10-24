@@ -7,142 +7,120 @@ const Withdrawal = require('../models/withdrawal')
 const mongoose = require('mongoose');
 const { verifyToken } = require('../middlewares/jwt');
 
-withdrawalRouter.post('/withdraw/:userId',verifyToken, async (req, res) => {
+withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+  let committed = false;
 
   try {
-    const userId = req.params.userId; // Extract userId from URL params
-    console.log('userId from params:', userId); // Add this line for logging
-
+    const userId = req.params.userId;
     const { withdrawalType, cryptoAddress, accountNumber, bankName, cryptoName, amount } = req.body;
 
-    // Validate the presence of required fields
     if (!userId || !withdrawalType || !amount) {
       return res.status(400).json({ message: 'userId, withdrawalType, and amount are required fields' });
     }
 
-    // Retrieve the user from the database
     const user = await User.findById(userId).session(session);
 
-    // Validate user existence and available balance
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if rewardAmount is less than the withdrawal amount
+       // Check if the user is an admin
+       if (user.isAdmin) {
+        return res.status(403).json({ message: 'Admins are not allowed to withdraw' });
+      }
+      
+    // Check if the withdrawal amount is not equal to the available rewardAmount
     if (user.rewardAmount < amount) {
       return res.status(400).json({ message: 'Insufficient reward amount for withdrawal' });
     }
 
-    // Update withdrawal status to "processing"
+    if(amount < user.rewardAmount){
+      return res.status(400).json({message: 'User must withdraw all reward Amount'})
+    }
+
     user.withdrawalStatus = 'processing';
 
-    // Deduct withdrawal amount from the user's rewardAmount
-    user.rewardAmount -= amount;
-
-    // Add a new withdrawal record to the withdrawalCount array based on withdrawal type
     const withdrawalCountItem = {
-      withdrawalType,
-      user: user._id,
+      withdrawalType: req.withdrawalType,
+      user: `${user.firstName} ${user.lastName}`,
       userId: user._id,
       amount,
     };
 
     if (withdrawalType === 'bank') {
-      // Validate bank-related fields
       if (!accountNumber || !bankName) {
         return res.status(400).json({ message: 'accountNumber and bankName are required for bank withdrawal' });
       }
-
       withdrawalCountItem.accountNumber = accountNumber;
       withdrawalCountItem.bankName = bankName;
     } else if (withdrawalType === 'crypto') {
-      // Validate crypto-related fields
       if (!cryptoAddress || !cryptoName) {
         return res.status(400).json({ message: 'cryptoAddress and cryptoName are required for crypto withdrawal' });
       }
-
       withdrawalCountItem.cryptoAddress = cryptoAddress;
       withdrawalCountItem.cryptoName = cryptoName;
     }
 
-    user.withdrawalCount.push(withdrawalCountItem);
+    user.withdrawalDetails.push(withdrawalCountItem);
 
-    // Save the updated user details
+    // Check if the user is not premium and has already made a withdrawal
+    if (!user.isPremium && user.withdrawalDetails.length > 1) {
+      return res.status(400).json({ message: 'Free users can only withdraw once' });
+    }
+
     await user.save({ session });
 
-    // Create a new withdrawal record
     const withdrawalRecord = await Withdrawal.create(
       {
         userId: user._id,
-        withdrawalType,
+        withdrawalType: req.withdrawalType,
         amount,
         available: user.rewardAmount,
         status: 'processing',
-        count: user.withdrawalCount.length,
-        withdrawalCountItems: [withdrawalCountItem], // Wrap the object in an array
+        count: user.withdrawalDetails.length,
       },
       { session }
-    );    
-    console.log('user._id:', user._id);
+    );
 
-    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
+    committed = true;
 
-    // Simulate processing delay (replace with actual processing logic)
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Simulate approval (replace with actual approval logic)
-    const isApproved = Math.random() < 1; // Randomly approve 100% of withdrawals
+    const isApproved = Math.random() < 1;
 
     if (isApproved) {
-      // Update withdrawal status to "approved"
+      // Deduct the amount only if the withdrawal is approved
+      user.rewardAmount -= amount;
       user.withdrawalStatus = 'approved';
-
-      // Save the updated user details
       await user.save();
 
-      // Update withdrawal status to "approved"
       withdrawalRecord.status = 'approved';
 
-      // Save the updated withdrawal details
-      await withdrawalRecord.save();
-
-      // Return success response with withdrawal status
-      return res.status(200).json({ message: 'Withdrawal approved', status: 'approved' });
+      // Response includes details of the transaction
+      return res.status(200).json({
+        message: 'Withdrawal approved',
+        status: 'approved',
+        withdrawalDetails: withdrawalCountItem,
+      });
     } else {
-      // Update withdrawal status to "processed"
-      user.withdrawalStatus = 'processed';
+      user.withdrawalStatus = 'processing';
+      withdrawalRecord.status = 'processing';
 
-      // Return the withdrawn amount to the user's rewardAmount
-      user.rewardAmount += amount;
-
-      // Save the updated user details
-      await user.save();
-
-      // Update withdrawal status to "processed"
-      withdrawalRecord.status = 'processed';
-
-      // Save the updated withdrawal details
-      await withdrawalRecord.save();
-
-      // Return success response with withdrawal status
       return res.status(200).json({ message: 'Withdrawal processing', status: 'pending' });
     }
   } catch (error) {
-    // Rollback the transaction in case of an error
-    await session.abortTransaction();
-    session.endSession();
-
+    if (!committed) {
+      // Rollback the transaction in case of an error
+      await session.abortTransaction();
+      session.endSession();
+    }
     console.error(error);
     return res.status(500).json({ message: 'Withdrawal failed', status: 'rejected' });
   }
 });
-
-
-
-// Add any other necessary routes or middleware functions
 
 module.exports = withdrawalRouter;

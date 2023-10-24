@@ -1,30 +1,47 @@
 const mongoose = require('mongoose');
 
 const withdrawalSchema = new mongoose.Schema({
-  amount: {
-    type: Number,
-    required: true,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
   },
-  available: {
-    type: Number,
-  },
+
+  details: [
+    {
+      accountNumber: String,
+      bankName: String,
+      amount: Number,
+      withdrawalType: {
+        type: String,
+        enum: ['bank'], // Use an array for enum
+      },
+      date: {
+        type: String,
+        default: new Date().getTime().toString(),
+      },
+    },
+    {
+      cryptoAddress: String,
+      cryptoName: String,
+      amount: Number,
+      withdrawalType: {
+        type: String,
+        enum: ['crypto'], // Use an array for enum
+      },
+      date: {
+        type: String,
+        default: new Date().getTime().toString(),
+      },
+    },
+  ],
+
   status: {
     type: String,
     enum: ['pending', 'processing', 'approved', 'processed', 'rejected'],
     default: 'pending',
   },
-  count:{
+  count: {
     type: Number,
-    required: true
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
   },
 });
 

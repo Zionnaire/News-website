@@ -33,37 +33,7 @@ const userSchema = new mongoose.Schema({
     default: 0,
   },
 
-  withdrawalCount: {
-    type: [
-      {
-        accountNumber: String,
-        bankName: String,
-        amount: Number,
-        withdrawalType: {
-          type: String,
-          enum: 'bank'
-        },
-        date: {
-          type: String,
-          default: new Date().getTime().toString(),
-        },
-      },
-      {
-        cryptoAddress: String,
-        cryptoName: String,
-        amount: Number,
-        withdrawalType: {
-          type: String,
-          enum: 'crypto'
-        },
-        date: {
-          type: String,
-          default: new Date().getTime().toString(),
-        },
-      },
-    ],
-    default: [], // Set as an empty array by default
-  },
+  withdrawalDetails: [],
   withdrawalStatus:{
     type: String,
     enum: ['pending', 'processing', 'approved', 'rejected'],
@@ -75,10 +45,10 @@ const userSchema = new mongoose.Schema({
       cld_id: { type: String },
     },
   }],
-  contentStartTime: {
-    type: String,
-    default: new Date().getTime().toString(),
-  },
+  // contentStartTime: {
+  //   type: String,
+  //   default: new Date().getTime().toString(),
+  // },
   rewardedContents: {
     type: [
       {

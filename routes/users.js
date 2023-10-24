@@ -113,6 +113,10 @@ userRouter.get('/:userId', async (req, res) => {
       email: user.email,
       roleId: user.roleId,
       role: user.roleId.name, // Include the role name from the populated 'roleId'
+      isPremuim: user.isPremium,
+      isAdmin: user.isAdmin,
+      rewardAmount: user.rewardAmount,
+      withdrawalDetails: user.withdrawalDetails,
     });
   }  catch (error) {
     // Handle the error appropriately
@@ -262,7 +266,7 @@ userRouter.post('/content/:userId', async (req, res) => {
     user.rewardAmount += 0.12;
     user.rewardedContents.push(contentId);
 
-    console.log('User after update:', user); // Add this log
+    //console.log('User after update:', user); // Add this log
 
     // Save the updated user document
     user = await user.save();
