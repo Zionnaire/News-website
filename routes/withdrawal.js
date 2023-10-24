@@ -14,7 +14,7 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
 
   try {
     const userId = req.params.userId;
-    const { withdrawalType, cryptoAddress, accountNumber, bankName, cryptoName, amount } = req.body;
+    const { withdrawalType, cryptoAddress, accountNumber, bankName, amount } = req.body;
 
     if (!userId || !withdrawalType || !amount) {
       return res.status(400).json({ message: 'userId, withdrawalType, and amount are required fields' });
@@ -56,11 +56,10 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
       withdrawalCountItem.accountNumber = accountNumber;
       withdrawalCountItem.bankName = bankName;
     } else if (withdrawalType === 'crypto') {
-      if (!cryptoAddress || !cryptoName) {
+      if (!cryptoAddress) {
         return res.status(400).json({ message: 'cryptoAddress and cryptoName are required for crypto withdrawal' });
       }
       withdrawalCountItem.cryptoAddress = cryptoAddress;
-      withdrawalCountItem.cryptoName = cryptoName;
     }
 
     user.withdrawalDetails.push(withdrawalCountItem);

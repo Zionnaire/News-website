@@ -22,7 +22,6 @@ const withdrawalSchema = new mongoose.Schema({
     },
     {
       cryptoAddress: String,
-      cryptoName: String,
       amount: Number,
       withdrawalType: {
         type: String,
