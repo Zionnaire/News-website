@@ -233,7 +233,41 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       return res.status(500).json({ message: "Internal Server Error" });
     }
   });
-  
+
+  superAdminRouter.post("/admin/make-premium", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Check if the authenticated user is a super admin
+        const superAdminExist = await SuperAdmin.findById(userId);
+        if (!superAdminExist) {
+            return res.status(403).json({ message: "Unauthorized access" });
+        }
+
+        const { email } = req.body;
+
+        const userExist = await User.findOne({ email: email });
+        if (!userExist) {
+            logger.error(`User not found: ${email}`);
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Update the user's premium status to true
+        userExist.isPremium = true;
+        await userExist.save();
+
+        return res.json({
+            message: `User ${userExist.firstName} has been made premium`,
+            userName: userExist.userName,
+            email: userExist.email,
+            isAdmin: userExist.isAdmin,
+            isPremium: true,
+        });
+    } catch (error) {
+        console.error('Error during make-premium operation:', error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 
   superAdminRouter.post("/admin/remove-user", verifyToken, async (req, res) => {
     try {
