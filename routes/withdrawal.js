@@ -43,10 +43,13 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
     user.withdrawalStatus = 'processing';
 
     const withdrawalCountItem = {
+      withdrawalId: mongoose.Types.ObjectId(), // Generate a new ObjectId as withdrawalId
       withdrawalType: req.withdrawalType,
       user: `${user.firstName} ${user.lastName}`,
       userId: user._id,
       amount,
+      available: user.rewardAmount,
+      withdrawalTime: new Date().toISOString(), // Include withdrawal time
     };
 
     if (withdrawalType === 'bank') {
@@ -73,6 +76,7 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
 
     const withdrawalRecord = await Withdrawal.create(
       {
+        withdrawalId: withdrawalCountItem.withdrawalId, // Save the withdrawalId in the Withdrawal model
         userId: user._id,
         withdrawalType: req.withdrawalType,
         amount,
