@@ -14,7 +14,7 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
 
   try {
     const userId = req.params.userId;
-    const authenticatedUserId = req.user.id; // Assuming you have user information stored in req.user
+    const authenticatedUserId = req.user.id; 
 
     // Check if the person initiating the request is the actual user
     if (userId !== authenticatedUserId) {
