@@ -255,23 +255,17 @@ userRouter.post('/content/:userId', async (req, res) => {
       user.rewardedContents = [];
     }
 
-    //console.log('Rewarded contents before update:', user.rewardedContents); // Add this log
-
     // Check if the user has already been rewarded for this content
     if (user.rewardedContents.includes(contentId)) {
       return res.status(400).json({ message: 'User has already been rewarded for this content' });
     }
-
+  
     // Update the rewardAmount and add the content to the rewarded list
-    user.rewardAmount += 0.12;
+    user.rewardAmount += 200;
     user.rewardedContents.push(contentId);
-
-    //console.log('User after update:', user); // Add this log
 
     // Save the updated user document
     user = await user.save();
-
-    //console.log('User after save:', user); // Add this log
 
     return res.json({
       message: 'User rewarded successfully',

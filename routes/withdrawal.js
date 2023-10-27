@@ -14,36 +14,42 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
 
   try {
     const userId = req.params.userId;
-    const { withdrawalType, cryptoAddress, accountNumber, bankName, amount } = req.body;
+    const authenticatedUserId = req.user.id; // Assuming you have user information stored in req.user
 
-    if (!userId || !withdrawalType || !amount) {
-      return res.status(400).json({ message: 'userId, withdrawalType, and amount are required fields' });
+    // Check if the person initiating the request is the actual user
+    if (userId !== authenticatedUserId) {
+      return res.status(403).json({ message: 'Unauthorized access: You can only withdraw for your own account' });
     }
+  const { withdrawalType, cryptoAddress, accountNumber, bankName, amount } = req.body;
 
-    const user = await User.findById(userId).session(session);
+  if (!userId || !withdrawalType || !amount) {
+    return res.status(400).json({ message: 'userId, withdrawalType, and amount are required fields' });
+  }
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+  const user = await User.findById(userId).session(session);
 
-       // Check if the user is an admin
-       if (user.isAdmin) {
-        return res.status(403).json({ message: 'Admins are not allowed to withdraw' });
-      }
-      
-    // Check if the withdrawal amount is not equal to the available rewardAmount
-    if (user.rewardAmount < amount) {
-      return res.status(400).json({ message: 'Insufficient reward amount for withdrawal' });
-    }
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
 
-    if(amount < user.rewardAmount){
-      return res.status(400).json({message: 'User must withdraw all reward Amount'})
-    }
+  // Check if the user is an admin
+  if (user.isAdmin) {
+    return res.status(403).json({ message: 'Admins are not allowed to withdraw' });
+  }
 
-    user.withdrawalStatus = 'processing';
+  // Check if the withdrawal amount is not equal to the available rewardAmount
+  if (user.rewardAmount < amount) {
+    return res.status(400).json({ message: 'Insufficient reward amount for withdrawal' });
+  }
 
-    const withdrawalCountItem = {
-      withdrawalId: mongoose.Types.ObjectId(), // Generate a new ObjectId as withdrawalId
+  if (amount < user.rewardAmount) {
+    return res.status(400).json({ message: 'User must withdraw all reward Amount' });
+  }
+
+  user.withdrawalStatus = 'processing';
+
+const withdrawalCountItem = {
+    withdrawalId: new mongoose.Types.ObjectId(), // Generate a new ObjectId as withdrawalId
       withdrawalType: req.withdrawalType,
       user: `${user.firstName} ${user.lastName}`,
       userId: user._id,
@@ -52,6 +58,7 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
       withdrawalTime: new Date().toISOString(), // Include withdrawal time
     };
 
+       
     if (withdrawalType === 'bank') {
       if (!accountNumber || !bankName) {
         return res.status(400).json({ message: 'accountNumber and bankName are required for bank withdrawal' });
@@ -108,8 +115,8 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
         message: 'Withdrawal processing',
         status: 'pending',
         withdrawalDetails: {
-            ...withdrawalCountItem,
-            date: withdrawalRecord.details[0].date, // Access the date from the details array
+          ...withdrawalCountItem,
+          date: withdrawalRecord.details[0].date, // Access the date from the details array
         },
       });
     } else {
@@ -128,5 +135,6 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
     return res.status(500).json({ message: 'Withdrawal failed', status: 'rejected' });
   }
 });
+
 
 module.exports = withdrawalRouter;
