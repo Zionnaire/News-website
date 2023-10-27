@@ -116,7 +116,7 @@ const withdrawalCountItem = {
         status: 'pending',
         withdrawalDetails: {
           ...withdrawalCountItem,
-          date: withdrawalRecord.details[0].date, // Access the date from the details array
+          date: withdrawalRecord.details.length > 0 ? withdrawalRecord.details[0].date : null, // Access the date from the details array
         },
       });
     } else {
