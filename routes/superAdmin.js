@@ -7,7 +7,8 @@ const { signJwt, verifyToken } = require("../middlewares/jwt");
 const { createLogger, transports, format } = require('winston');
 const SuperAdmin = require('../models/superAdmin');
 const Withdrawal = require('../models/withdrawal')
-
+const TransactionHistory = require('../models/withdrawHistory')
+const mongoose = require ("mongoose")
 const superAdminRouter = express.Router();
 
 
@@ -186,63 +187,94 @@ superAdminRouter.post("/admin/register", async (req, res) => {
     }
   });
 
-  superAdminRouter.post("/admin/approve-withdrawal", verifyToken, async (req, res) => {
+  superAdminRouter.post("/admin/approve-withdrawal/:userId", verifyToken, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const superUserId = req.user.id;
   
       // Check if the authenticated user is a super admin
-      const superAdminExist = await SuperAdmin.findById(userId);
-      const user = await User.findById(userId);
+      const superAdminExist = await SuperAdmin.findById(superUserId);
+      const userId = req.params.userId;  
       if (!superAdminExist) {
         return res.status(403).json({ message: "Unauthorized access" });
       }
   
       const { withdrawalId } = req.body;
   
-      // Fetch the withdrawal record using the withdrawalId
-      const withdrawal = await Withdrawal.findById(withdrawalId);
+      // Check if the withdrawalId exists in the withdrawalHistory model
+      const withdrawalHistory = await TransactionHistory.findOne({
+        "withdrawalRecords.withdrawalId": new mongoose.Types.ObjectId(withdrawalId.trim()),
+      });
   
-      if (!withdrawal) {
-        return res.status(404).json({ message: "Withdrawal not found" });
+      if (!withdrawalHistory) {
+        return res.status(404).json({ message: "Withdrawal not found in history" });
       }
-
+  
+      // Find the specific withdrawal record
+      const withdrawalRecord = withdrawalHistory.withdrawalRecords.find(
+        (record) => record.withdrawalId.toString() === withdrawalId.trim()
+      );
+  
       // Check if the withdrawal is already approved
-      if (withdrawal.status === "approved") {
+      if (withdrawalRecord.status === "approved") {
         return res.status(409).json({ message: "Withdrawal is already approved" });
-    }
-  
-      if (user.isPremium === true) {
-        // Super admin logic to approve the withdrawal
- withdrawal.status = "approved";
- await withdrawal.save();
- return res.json({
-  message: "Withdrawal approved",
-  withdrawalDetails: withdrawal,
-});
-      } else {
-        // Check if the user has a role of "Regular" and if the withdrawal amount is not greater than one
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-  
-        if (user.isPremium === false && withdrawal.count < 1) {
-          // Regular user logic to approve the withdrawal
-          withdrawal.status = "approved";
-          await withdrawal.save();
-          return res.json({
-           message: "Withdrawal approved",
-           withdrawalDetails: withdrawal,
-         });
-        } else {
-          return res.status(403).json({ message: "Withdrawal cannot be approved" });
-        }
       }
+  
+      // Check if the user making the request exists
+      if (!userId) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      // Check if the amount to be withdrawn is equal to the available rewardAmount
+      if (withdrawalRecord.amount !== withdrawalRecord.available) {
+        return res.status(400).json({
+          message: "Withdrawal amount does not match available reward amount",
+        });
+      }
+  
+      // Update available and status
+      withdrawalRecord.status = "approved";
+      withdrawalRecord.available -= withdrawalRecord.amount;
+  
+      // Save the updated withdrawalHistory document
+      await withdrawalHistory.save();
+  
+      return res.json({
+        message: "Withdrawal approved",
+        withdrawalDetails: withdrawalRecord,
+      });
     } catch (error) {
+      console.error(error); // Log the error for debugging
       logger.error(error);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   });
-
+  
+  superAdminRouter.get("/admin/all-withdrawals", verifyToken, async (req, res) => {
+    try {
+      const superUserId = req.user.id;
+  
+      // Check if the authenticated user is a super admin
+      const superAdminExist = await SuperAdmin.findById(superUserId);
+  
+      if (!superAdminExist) {
+        return res.status(403).json({ message: "Unauthorized access" });
+      }
+  
+      // Retrieve all withdrawal records from the TransactionHistory model
+      const allWithdrawals = await TransactionHistory.find({})
+  
+      return res.json({
+        message: "All withdrawal requests retrieved",
+        withdrawalDetails: allWithdrawals,
+      });
+    } catch (error) {
+      console.error(error); // Log the error for debugging
+      logger.error(error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+  
+ 
   superAdminRouter.post("/admin/make-premium", verifyToken, async (req, res) => {
     try {
         const userId = req.user.id;

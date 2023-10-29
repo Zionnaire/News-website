@@ -6,6 +6,8 @@ const Withdrawal = require('../models/withdrawal')
 // Withdrawal Route
 const mongoose = require('mongoose');
 const { verifyToken } = require('../middlewares/jwt');
+const TransactionHistory = require("../models/withdrawHistory")
+
 
 withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
@@ -57,7 +59,7 @@ const withdrawalCountItem = {
       available: user.rewardAmount,
       withdrawalTime: new Date().toISOString(), // Include withdrawal time
     };
-
+    console.log("Generated withdrawalId:", withdrawalCountItem.withdrawalId);
        
     if (withdrawalType === 'bank') {
       if (!accountNumber || !bankName) {
@@ -82,21 +84,48 @@ const withdrawalCountItem = {
     await user.save({ session });
 
     const withdrawalRecord = await Withdrawal.create(
-      {
-        withdrawalId: withdrawalCountItem.withdrawalId, // Save the withdrawalId in the Withdrawal model
-        userId: user._id,
-        withdrawalType: req.withdrawalType,
-        amount,
-        available: user.rewardAmount,
-        status: 'processing',
-        count: user.withdrawalDetails.length,
-      },
+      [
+        {
+          withdrawalId: withdrawalCountItem.withdrawalId, // Save the withdrawalId in the Withdrawal model
+          userId: user._id,
+          withdrawalType: req.withdrawalType,
+          amount,
+          available: user.rewardAmount,
+          status: 'processing',
+          count: user.withdrawalDetails.length,
+        },
+      ],
       { session }
     );
 
-    await session.commitTransaction();
-    session.endSession();
-    committed = true;
+
+// Find or create a TransactionHistory document for the user
+let transactionHistory = await TransactionHistory.findOne({ userId: user._id });
+
+if (!transactionHistory) {
+  // Create a new TransactionHistory document if not found
+  transactionHistory = await TransactionHistory.create({ userId: user._id, withdrawalRecords: [] }, { session });
+}
+
+// Ensure withdrawalRecords is an array before pushing
+transactionHistory.withdrawalRecords = transactionHistory.withdrawalRecords || [];
+
+// Push the withdrawalRecord into the withdrawalRecords array
+transactionHistory.withdrawalRecords.push({
+  withdrawalId: withdrawalCountItem.withdrawalId,
+  withdrawalType: req.withdrawalType,
+  amount,
+  available: user.rewardAmount,
+  status: 'processing',
+  count: user.withdrawalDetails.length,
+});
+
+// Save the updated TransactionHistory document
+await transactionHistory.save();
+
+await session.commitTransaction();
+session.endSession();
+committed = true;
 
     await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -110,13 +139,20 @@ const withdrawalCountItem = {
 
       withdrawalRecord.status = 'processing';
 
+      const withdrawalDetails = withdrawalRecord.details || [];
+const bankWithdrawal = withdrawalDetails.find(detail => detail.withdrawalType === 'bank');
+const cryptoWithdrawal = withdrawalDetails.find(detail => detail.withdrawalType === 'crypto');
+
+const date = bankWithdrawal ? bankWithdrawal.date : (cryptoWithdrawal ? cryptoWithdrawal.date : null);
+
+
       // Response includes details of the transaction
       return res.status(200).json({
         message: 'Withdrawal processing',
         status: 'pending',
         withdrawalDetails: {
           ...withdrawalCountItem,
-          date: withdrawalRecord.details.length > 0 ? withdrawalRecord.details[0].date : null, // Access the date from the details array
+          date: date // Access the date from the details array
         },
       });
     } else {
