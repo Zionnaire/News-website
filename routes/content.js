@@ -82,7 +82,7 @@ contentRouter.get('/', async (req, res) => {
 });
 
 //Create Contents
-contentRouter.post('/contents', verifyToken, async (req, res) => {
+contentRouter.post('/contents', verifyToken, async (req, res) => { 
   try {
     
     const { body, title, category} = req.body;
@@ -129,7 +129,7 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
 
 
     for (const image of images) {
-      console.log('Image object:', image);
+      // console.log('Image object:', image);
   if (image && image.mimetype && image.data) {
     const randomId = Math.random().toString(36).substring(2);
     const imageFileName = randomId + (image.name || '');
@@ -147,7 +147,7 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
 }
 
 for (const video of videos) {
-  console.log('Video object:', video);
+  // console.log('Video object:', video);
   if (video && video.mimetype && video.data) {
     const randomId = Math.random().toString(36).substring(2);
     const videoFileName = randomId + (video.name || '');

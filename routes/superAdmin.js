@@ -191,66 +191,40 @@ superAdminRouter.post("/admin/register", async (req, res) => {
   superAdminRouter.post("/admin/approve-withdrawal/:userId", verifyToken, async (req, res) => {
     try {
       const superUserId = req.user.id;
-  
+    
       // Check if the authenticated user is a super admin
       const superAdminExist = await SuperAdmin.findById(superUserId);
       const userId = req.params.userId;  
       if (!superAdminExist) {
         return res.status(403).json({ message: "Unauthorized access" });
       }
-  
+    
       const { withdrawalId } = req.body;
-      const user = await User.findOne({ _id: userId });  
-      // Check if the withdrawalId exists in the withdrawalHistory model
-      const withdrawalHistory = await TransactionHistory.findOne({
-        "withdrawalRecords.withdrawalId": new mongoose.Types.ObjectId(withdrawalId.trim()),
-      });
-  
-      if (!withdrawalHistory) {
-        return res.status(404).json({ message: "Withdrawal not found in history" });
-      }
-  
-      // Find the specific withdrawal record
-      const withdrawalRecord = withdrawalHistory.withdrawalRecords.find(
-        (record) => record.withdrawalId.toString() === withdrawalId.trim()
+    
+      // Update the status for every withdrawal detail in the array using findByIdAndUpdate
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          $set: {
+            'withdrawalDetails.$[element].status': 'approved',
+          },
+          $inc: {
+            'withdrawalDetails.$[element].available': -1 * '$withdrawalDetails.$[element].amount',
+          },
+        },
+        {
+          arrayFilters: [{ 'element.withdrawalId': new mongoose.Types.ObjectId(withdrawalId.trim()), 'element.status': { $ne: 'approved' } }],
+          new: true, // Return the modified document
+        }
       );
-  
-      // Check if the withdrawal is already approved
-      if (withdrawalRecord.status === "approved") {
-        return res.status(409).json({ message: "Withdrawal is already approved" });
-      }
-  
-      // Check if the user making the request exists
-      if (!user) {
+    
+      if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
   
-      //Check if the amount to be withdrawn is equal to the available rewardAmount
-      if (withdrawalRecord.amount !== withdrawalRecord.available) {
-        return res.status(400).json({
-          message: "Withdrawal amount does not match available reward amount",
-        });
-      }
-  
-      // Update available and status
-      withdrawalRecord.status = "approved";
-// Update the status for every withdrawal detail in the array
-user.withdrawalDetails.forEach((detail) => {
-  if (detail.status !== 'approved') {
-    // Only update details that are not already approved
-    detail.status = 'approved';
-    detail.available -= detail.amount; // Deduct the amount withdrawn
-  }
-});     
- withdrawalRecord.available -= withdrawalRecord.amount;
-  
-      // Save the updated withdrawalHistory document
-      await withdrawalHistory.save();
-      await user.save();
-  
       return res.json({
         message: "Withdrawal approved",
-        withdrawalDetails: user.withdrawalDetails,
+        withdrawalDetails: updatedUser.withdrawalDetails,
       });
     } catch (error) {
       console.error(error); // Log the error for debugging
@@ -258,6 +232,8 @@ user.withdrawalDetails.forEach((detail) => {
       return res.status(500).json({ message: "Internal Server Error" });
     }
   });
+  
+  
   
   superAdminRouter.get("/admin/all-withdrawals", verifyToken, async (req, res) => {
     try {
