@@ -16,12 +16,11 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
 
   try {
     const userId = req.params.userId;
-    const authenticatedUserId = req.user.id; 
 
     // Check if the person initiating the request is the actual user
-    if (userId !== authenticatedUserId) {
-      return res.status(403).json({ message: 'Unauthorized access: You can only withdraw for your own account' });
-    }
+    // if (userId !== authenticatedUserId) {
+    //   return res.status(403).json({ message: 'Unauthorized access: You can only withdraw for your own account' });
+    // }
   const { withdrawalType, cryptoAddress, accountNumber, bankName, amount } = req.body;
 
   if (!userId || !withdrawalType || !amount) {
