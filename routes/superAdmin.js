@@ -200,6 +200,7 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       }
   
       const { withdrawalId } = req.body;
+      const user = await User.findOne(userId)
   
       // Check if the withdrawalId exists in the withdrawalHistory model
       const withdrawalHistory = await TransactionHistory.findOne({
@@ -221,7 +222,7 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       }
   
       // Check if the user making the request exists
-      if (!userId) {
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
   
@@ -233,11 +234,14 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       }
   
       // Update available and status
-      withdrawalRecord.status = "approved";
+      withdrawalRecord.status = "Approved";
+      user.withdrawalStatus = 'Approved'
+
       withdrawalRecord.available -= withdrawalRecord.amount;
   
       // Save the updated withdrawalHistory document
       await withdrawalHistory.save();
+      await user.save();
   
       return res.json({
         message: "Withdrawal approved",

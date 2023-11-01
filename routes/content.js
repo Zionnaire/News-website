@@ -129,9 +129,10 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
 
 
     for (const image of images) {
+      console.log('Image object:', image);
   if (image && image.mimetype && image.data) {
     const randomId = Math.random().toString(36).substring(2);
-    const imageFileName = randomId + image.name;
+    const imageFileName = randomId + (image.name || '');
     // console.log(imageFileName);
     const base64Image = `data:${image.mimetype};base64,${image.data.toString('base64')}`;
 
@@ -146,9 +147,10 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
 }
 
 for (const video of videos) {
+  console.log('Video object:', video);
   if (video && video.mimetype && video.data) {
     const randomId = Math.random().toString(36).substring(2);
-    const videoFileName = randomId + video.name;
+    const videoFileName = randomId + (video.name || '');
     // console.log(videoFileName);
     const base64Video = `data:${video.mimetype};base64,${video.data.toString('base64')}`;
     
@@ -178,7 +180,13 @@ const uploadVideoToCloudinary = async (base64Video, folderPath) => {
     });
     return { videoUrl, videoCldId };
   } catch (error) {
-    throw new Error(`Error uploading video to Cloudinary: ${error.message}`);
+    if (error.name === 'TimeoutError') {
+      console.error('Cloudinary Upload Error: TimeoutError');
+      return res.status(500).json({ message: 'Cloudinary upload timed out. Please try again.' });
+    } else {
+      console.error('Cloudinary Upload Error:', error.message);
+      return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+    }
   }
 };
 
@@ -188,9 +196,13 @@ async function uploadToCloudinary(base64File, folder) {
     
     return { secure_url, public_id }
   } catch (error) {
-    logger.error(error);
-    console.error('Cloudinary Upload Error:', error);
-    throw error;
+    if (error.name === 'TimeoutError') {
+      console.error('Cloudinary Upload Error: TimeoutError');
+      return res.status(500).json({ message: 'Cloudinary upload timed out. Please try again.' });
+    } else {
+      console.error('Cloudinary Upload Error:', error.message);
+      return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+    }
   }
 }
 
