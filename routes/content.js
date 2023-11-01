@@ -433,8 +433,6 @@ contentRouter.post('/contents/:id/like', verifyToken, async (req, res) => {
   }
 });
 
-
-
 // Increment view count of a specific content
 contentRouter.post('/contents/:id/increment-views', async (req, res) => {
   try {
@@ -600,7 +598,6 @@ contentRouter.delete('/contents/:contentId/comments/:commentId/replies/:replyId'
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 
 module.exports = contentRouter;

@@ -34,7 +34,7 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  // Check if the user is an admin
+  //Check if the user is an admin
   if (user.isAdmin) {
     return res.status(403).json({ message: 'Admins are not allowed to withdraw' });
   }
@@ -100,7 +100,7 @@ const withdrawalCountItem = {
 
 
 // Find or create a TransactionHistory document for the user
-let transactionHistory = await TransactionHistory.findOne({ userId: user._id });
+let transactionHistory = await TransactionHistory.findOne({ userId: user._id }).session(session);
 
 if (!transactionHistory) {
   // Create a new TransactionHistory document if not found
@@ -122,6 +122,7 @@ transactionHistory.withdrawalRecords.push({
 
 // Save the updated TransactionHistory document
 await transactionHistory.save();
+
 
 await session.commitTransaction();
 session.endSession();
