@@ -234,9 +234,11 @@ superAdminRouter.post("/admin/register", async (req, res) => {
   
       // Update available and status
       withdrawalRecord.status = "approved";
-      user.withdrawalStatus = 'approved'
-
-      withdrawalRecord.available -= withdrawalRecord.amount;
+// Update the status for every withdrawal detail in the array
+user.withdrawalDetails.forEach((detail) => {
+  detail.status = 'approved';
+});     
+ withdrawalRecord.available -= withdrawalRecord.amount;
   
       // Save the updated withdrawalHistory document
       await withdrawalHistory.save();
