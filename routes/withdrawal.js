@@ -34,9 +34,9 @@ withdrawalRouter.post('/withdraw/:userId', verifyToken, async (req, res) => {
   }
 
   //Check if the user is an admin
-  if (user.isAdmin) {
-    return res.status(403).json({ message: 'Admins are not allowed to withdraw' });
-  }
+  // if (user.isAdmin) {
+  //   return res.status(403).json({ message: 'Admins are not allowed to withdraw' });
+  // }
 
   // Check if the withdrawal amount is not equal to the available rewardAmount
   if (user.rewardAmount < amount) {

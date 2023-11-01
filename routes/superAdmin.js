@@ -200,8 +200,7 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       }
   
       const { withdrawalId } = req.body;
-      const user = await User.findOne(userId)
-  
+      const user = await User.findOne({ _id: userId });  
       // Check if the withdrawalId exists in the withdrawalHistory model
       const withdrawalHistory = await TransactionHistory.findOne({
         "withdrawalRecords.withdrawalId": new mongoose.Types.ObjectId(withdrawalId.trim()),
@@ -226,7 +225,7 @@ superAdminRouter.post("/admin/register", async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
   
-      // Check if the amount to be withdrawn is equal to the available rewardAmount
+      //Check if the amount to be withdrawn is equal to the available rewardAmount
       if (withdrawalRecord.amount !== withdrawalRecord.available) {
         return res.status(400).json({
           message: "Withdrawal amount does not match available reward amount",
@@ -234,8 +233,8 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       }
   
       // Update available and status
-      withdrawalRecord.status = "Approved";
-      user.withdrawalStatus = 'Approved'
+      withdrawalRecord.status = "approved";
+      user.withdrawalStatus = 'approved'
 
       withdrawalRecord.available -= withdrawalRecord.amount;
   
@@ -245,7 +244,7 @@ superAdminRouter.post("/admin/register", async (req, res) => {
   
       return res.json({
         message: "Withdrawal approved",
-        withdrawalDetails: withdrawalRecord,
+        withdrawalDetails: user.withdrawalDetails,
       });
     } catch (error) {
       console.error(error); // Log the error for debugging
