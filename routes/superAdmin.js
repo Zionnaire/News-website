@@ -236,7 +236,11 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       withdrawalRecord.status = "approved";
 // Update the status for every withdrawal detail in the array
 user.withdrawalDetails.forEach((detail) => {
-  detail.status = 'approved';
+  if (detail.status !== 'approved') {
+    // Only update details that are not already approved
+    detail.status = 'approved';
+    detail.available -= detail.amount; // Deduct the amount withdrawn
+  }
 });     
  withdrawalRecord.available -= withdrawalRecord.amount;
   
