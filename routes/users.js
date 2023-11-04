@@ -23,8 +23,6 @@ const logger = createLogger({
   )
 });
 
-
-
 userRouter.post(
   '/register',
   [
@@ -176,8 +174,6 @@ if (invalidFiles.length > 0) {
 
 // Assuming you have a user ID available in req.user.id after authentication
 const userId = req.user.id;
-const token = signJwt({ id: userId });
-
 // Find the user by ID
 const user = await User.findById(userId);
 if (!user) {
@@ -228,10 +224,9 @@ return res.json({
   }
 );
 
-
 // Route to reward a user after clicking content 
-userRouter.post('/content/:userId', async (req, res) => {
-  const userId = req.params.userId;
+userRouter.post('/content', verifyToken, async (req, res) => {
+  const userId = req.user.id;
   const contentId = req.body.contentId;
 
   // Find content
@@ -247,8 +242,6 @@ userRouter.post('/content/:userId', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    //console.log('User before update:', user); // Add this log
-
     // Initialize rewardedContents array if it doesn't exist
     if (!user.rewardedContents) {
       user.rewardedContents = [];
@@ -260,7 +253,7 @@ userRouter.post('/content/:userId', async (req, res) => {
     }
   
     // Update the rewardAmount and add the content to the rewarded list
-    user.rewardAmount += 200;
+    user.rewardAmount += 0.12;
     user.rewardedContents.push(contentId);
 
     // Save the updated user document
@@ -276,103 +269,6 @@ userRouter.post('/content/:userId', async (req, res) => {
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
-
-
-// Assume you have a route to mark the start of content viewing
-// userRouter.post('/content/:userId/start', async (req, res) => {
-//   const userId = req.params.userId; // Assuming user ID is available after authentication
-//   const contentId = req.body.contentId; // Assuming content ID is sent in the request body
-
-//   // Find content
-//   const content = await Content.findById(contentId);
-//   if (!content) {
-//     return res.status(404).json({ message: 'content not found' });
-//   }
-
-//   try {
-//     // Save the current timestamp in the user's document (you should have a User model)
-//     const user = await User.findOneAndUpdate(
-//       { _id: userId },
-//       { $set: { contentStartTime: new Date() } },
-//       { new: true }
-//     );
-
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found' });
-//     }
-
-//     // Log the content start time for debugging
-//     console.log('Content Start Time:', user.contentStartTime);
-
-//     return res.json({ message: 'Content viewing started', contentStartTime: user.contentStartTime });
-//   } catch (error) {
-//     console.error('Error in start API:', error);
-//     return res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// });
-
-// Route to mark the end of content viewing
-// userRouter.post('/content/:userId/end', async (req, res) => {
-//   try {
-//     const userId = req.params.userId;
-//     const contentId = req.body.contentId;
-
-//     // Find content
-//     const content = await Content.findById(contentId);
-//     if (!content) {
-//       return res.status(404).json({ message: 'Content not found' });
-//     }
-
-//     // Find the user and get the content start time
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found' });
-//     }
-
-//     const contentStartTime = user.contentStartTime;
-
-//     if (!contentStartTime) {
-//       return res.status(400).json({ message: 'Content start time not recorded' });
-//     }
-
-//     // Calculate the duration in minutes
-//     const currentTime = new Date();
-//     const durationInMinutes = (currentTime - new Date(contentStartTime)) / (1000 * 60);
-
-//     // Reward the user if the duration is at least one minute
-//     if (durationInMinutes >= 1) {
-//       const rewardPerContent = 0.12;
-//       // Update the rewardAmount
-//       user.rewardAmount += rewardPerContent;
-
-//       // Reset the contentStartTime
-//       user.contentStartTime = null;
-
-//       // Save the updated user document
-//       await user.save();
-
-//       return res.json({
-//         message: 'User rewarded successfully',
-//         userId: user._id,
-//         rewardAmount: user.rewardAmount,
-//       });
-//     } else {
-//       return res.status(400).json({ message: 'Duration must be at least one minute' });
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ message: 'Internal Server Error' });
-//   }
-// });
-
-// Helper function to calculate the duration in minutes
-// function calculateDuration(startTime) {
-//   const endTime = new Date();
-//   const timeDifference = endTime - startTime; // in milliseconds
-//   const durationInMinutes = timeDifference / (1000 * 60); // convert to minutes
-//   return durationInMinutes;
-// }
 
 // Helper function to upload image to Cloudinary
 async function uploadToCloudinary(base64File, folder) {

@@ -6,7 +6,7 @@ const Admin = require("../models/admin")
 const { signJwt, verifyToken } = require("../middlewares/jwt");
 const { createLogger, transports, format } = require('winston');
 const SuperAdmin = require('../models/superAdmin');
-const Withdrawal = require('../models/withdrawal')
+const {Withdrawal, withdrawalStatusEnum} = require('../models/withdrawal')
 const TransactionHistory = require('../models/withdrawHistory')
 const mongoose = require ("mongoose")
 const superAdminRouter = express.Router();
@@ -28,6 +28,7 @@ const logger = createLogger({
 superAdminRouter.post("/admin/register", async (req, res) => {
     try {
       const { userName, email, password, cPassword} = req.body;
+    
   
       // Check if a super admin with the same email already exists
       const existingSuperAdmin = await SuperAdmin.findOne({ email });
@@ -186,53 +187,46 @@ superAdminRouter.post("/admin/register", async (req, res) => {
     }
   });
   
-  
-
-  superAdminRouter.post("/admin/approve-withdrawal/:userId", verifyToken, async (req, res) => {
+  superAdminRouter.post("/admin/approve-withdrawal", verifyToken, async (req, res) => {
     try {
       const superUserId = req.user.id;
     
       // Check if the authenticated user is a super admin
       const superAdminExist = await SuperAdmin.findById(superUserId);
-      const userId = req.params.userId;  
+    
       if (!superAdminExist) {
         return res.status(403).json({ message: "Unauthorized access" });
       }
     
-      const { withdrawalId } = req.body;
+      const { withdrawalId } = req.body; // Use consistent variable naming
     
-      // Update the status for every withdrawal detail in the array using findByIdAndUpdate
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        {
-          $set: {
-            'withdrawalDetails.$[element].status': 'approved',
-          },
-          $inc: {
-            'withdrawalDetails.$[element].available': -1 * '$withdrawalDetails.$[element].amount',
-          },
-        },
-        {
-          arrayFilters: [{ 'element.withdrawalId': new mongoose.Types.ObjectId(withdrawalId.trim()), 'element.status': { $ne: 'approved' } }],
-          new: true, // Return the modified document
-        }
-      );
-    
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
+      let withdrawalDetails = await Withdrawal.findOne({ _id: withdrawalId, status: withdrawalStatusEnum.PENDING });
+    console.log(withdrawalDetails);
+      if (!withdrawalDetails) {
+        return res.status(404).json({ message: 'Withdrawal not found or already processed' });
       }
-  
+    
+      // Update user and withdrawal details
+      let updatedUser = await User.findById(withdrawalDetails.userId)
+      updatedUser.rewardAmount = updatedUser.rewardAmount - withdrawalDetails.amount
+      await updatedUser.save()
+    
+      // Update withdrawal status directly without using array filters
+      withdrawalDetails.status = withdrawalStatusEnum.APPROVED;
+
+      await withdrawalDetails.save();
+    
       return res.json({
         message: "Withdrawal approved",
-        withdrawalDetails: updatedUser.withdrawalDetails,
+        withdrawalDetails,
+        balance: updatedUser.rewardAmount
       });
     } catch (error) {
-      console.error(error); // Log the error for debugging
+      console.error(error);
       logger.error(error);
-      return res.status(500).json({ message: "Internal Server Error" });
+      return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
   });
-  
   
   
   superAdminRouter.get("/admin/all-withdrawals", verifyToken, async (req, res) => {

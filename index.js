@@ -36,7 +36,7 @@ app.use('/api/v1/', renderRouter);
 app.use('/api/v1/superAdmin', superAdminRouter);
 app.use('/api/v1/category', categoryRouter);
 app.use('/api/v1/withdraw', withdrawalRouter)
-app.use('/api/v1', withdrawalHistoryRouter)
+app.use('/api/v1/transactionHistory', withdrawalHistoryRouter)
 
 connectDB();
 app.listen(port, () => {

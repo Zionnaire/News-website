@@ -1,44 +1,29 @@
 const mongoose = require('mongoose');
 
+const withdrawalStatusEnum = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected'
+};
 const withdrawalSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
-
-  details: [
-    {
       accountNumber: String,
       bankName: String,
+      cryptoAddress: {
+        type: String
+      },
       amount: Number,
       withdrawalType: {
         type: String,
-        enum: ['bank'], // Use an array for enum
+        enum: ['bank', 'crypto'], // Use an array for enum
       },
-      date: {
-        type: String,
-        default: new Date().getTime().toString(),
-      },
-    },
-    {
-      cryptoAddress: String,
-      amount: Number,
-      withdrawalType: {
-        type: String,
-        enum: ['crypto'], // Use an array for enum
-      },
-      date: {
-        type: String,
-        default: new Date().getTime().toString(),
-      },
-    },
-  ],
-
-  status: {
-    type: String,
-    enum: ['pending', 'processing', 'approved', 'processed', 'rejected'],
-    default: 'pending',
-  },
+status: { type: String, 
+  enum: Object.values(withdrawalStatusEnum),
+   default: withdrawalStatusEnum.PENDING
+ },
   count: {
     type: Number,
   },
@@ -46,4 +31,4 @@ const withdrawalSchema = new mongoose.Schema({
 
 const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
 
-module.exports = Withdrawal;
+module.exports = {Withdrawal, withdrawalStatusEnum};
