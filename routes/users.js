@@ -253,7 +253,7 @@ userRouter.post('/content', verifyToken, async (req, res) => {
     }
   
     // Update the rewardAmount and add the content to the rewarded list
-    user.rewardAmount += 0.12;
+    user.rewardAmount += 200;
     user.rewardedContents.push(contentId);
 
     // Save the updated user document

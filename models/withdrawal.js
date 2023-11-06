@@ -20,6 +20,8 @@ const withdrawalSchema = new mongoose.Schema({
         type: String,
         enum: ['bank', 'crypto'], // Use an array for enum
       },
+      balance: Number,
+      available: Number,
 status: { type: String, 
   enum: Object.values(withdrawalStatusEnum),
    default: withdrawalStatusEnum.PENDING

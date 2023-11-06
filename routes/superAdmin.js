@@ -219,7 +219,6 @@ superAdminRouter.post("/admin/register", async (req, res) => {
       return res.json({
         message: "Withdrawal approved",
         withdrawalDetails,
-        balance: updatedUser.rewardAmount
       });
     } catch (error) {
       console.error(error);

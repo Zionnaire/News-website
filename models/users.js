@@ -32,8 +32,6 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-
-  withdrawalDetails: [],
   withdrawalStatus:{
     type: String,
     enum: ['pending', 'processing', 'approved', 'rejected'],
