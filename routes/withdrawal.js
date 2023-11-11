@@ -197,7 +197,7 @@ withdrawalRouter.post('/withdraw', verifyToken, async (req, res) => {
         available: user.rewardAmount,
         bankName,
         cryptoAddress: cryptoAddress,
-        accountNumber,
+        accountNumber: accountNumber,
         balance: user.rewardAmount,
         fullName: `${user.firstName} ${user.lastName}`,
         isPremium: user.isPremium,
@@ -232,6 +232,7 @@ const responsePayload = {
   withdrawalRecord: filteredWithdrawalRecord.map(record => ({
     userId: record.userId,
     cryptoAddress: record.cryptoAddress,
+    accountNumber: record.accountNumber,
     amount: record.amount,
     withdrawalType: record.withdrawalType,
     balance: record.balance,

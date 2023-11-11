@@ -10,7 +10,9 @@ const withdrawalSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
-      accountNumber: String,
+      accountNumber: {
+        type: String
+      },
       bankName: String,
       cryptoAddress: {
         type: String
