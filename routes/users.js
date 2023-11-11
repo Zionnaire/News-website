@@ -126,7 +126,7 @@ userRouter.get('/:userId', async (req, res) => {
 userRouter.get('/', async (req, res) => {
   try {
 
-    const users = await User.find().populate('withdrawalDetails');
+    const users = await User.find();
     return res.json(users);
   } catch (error) {
     console.error(error);
