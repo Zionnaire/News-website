@@ -96,7 +96,7 @@ userRouter.get('/:userId', async (req, res) => {
     const userId = req.params.userId;
 
     // Find the user by ID in the database and populate the 'role' field
-    const user = await User.findOne({ _id: userId }).populate('withdrawalDetails');
+    const user = await User.findOne({ _id: userId });
     // Check if the user exists
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
