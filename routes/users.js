@@ -145,7 +145,7 @@ userRouter.put(
   body('lastName').trim().notEmpty().withMessage('Last name is required'),
   body('email').trim().isEmail().withMessage('Invalid email'),
   body('password').optional().trim().isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  body('cPassword').custom((value, { req }) => {
+  body('cPassword').optional().custom((value, { req }) => {
     if (value && value !== req.body.password) {
       throw new Error('Confirm password must match password');
     }
@@ -153,74 +153,93 @@ userRouter.put(
   }),
   ],
   async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+  // ...
+
+try {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { firstName, lastName, email, password, cPassword } = req.body;
+
+  // Assuming you have a user ID available in req.user.id after authentication
+  const userId = req.user.id;
+  // Find the user by ID
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  // Update user fields
+  if (firstName) user.firstName = firstName;
+  if (lastName) user.lastName = lastName;
+  if (email) user.email = email;
+  if (password !== undefined && password !== null) user.password = password;
+  if (cPassword) user.cPassword = cPassword;
+
+  // Extracting the first file from req.files
+  const files = req.files ? Object.values(req.files) : [];
+
+  // Check if files is an array and not empty
+  if (Array.isArray(files) && files.length > 0) {
+    // Check each file for allowed types
+    const invalidFiles = files.filter(file => !allowedImageTypes.includes(file.mimetype));
+    if (invalidFiles.length > 0) {
+      return res.status(400).json({ message: 'Invalid file type' });
+    }
+
+    // If userImage array is empty, push the new file
+    if (user.userImage.length === 0) {
+      for (const file of files) {
+        try {
+          const randomId = Math.random().toString(36).substring(2);
+          const imageFileName = randomId + file.name;
+          const base64Image = `data:${file.mimetype};base64,${file.data.toString('base64')}`;
+
+          const { secure_url: imageUrl, public_id: imageCldId } = await uploadToCloudinary(base64Image, `profile-images/${imageFileName}`);
+
+          // Add the new image object to the userImage array
+          user.userImage.push({
+            url: imageUrl,
+            cld_id: imageCldId,
+          });
+        } catch (error) {
+          console.error('Error uploading image to Cloudinary:', error.message);
+          return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+        }
       }
-
-      const { firstName, lastName, email, password } = req.body;
-     // Extracting the first file from req.files
-const files = Object.values(req.files); // Convert object to array
-if (!files || files.length === 0) {
-  return res.status(400).json({ message: 'No files uploaded' });
-}
-
-// Check each file for allowed types
-const invalidFiles = files.filter(file => !allowedImageTypes.includes(file.mimetype));
-if (invalidFiles.length > 0) {
-  return res.status(400).json({ message: 'Invalid file type' });
-}
-
-// Assuming you have a user ID available in req.user.id after authentication
-const userId = req.user.id;
-// Find the user by ID
-const user = await User.findById(userId);
-if (!user) {
-  return res.status(404).json({ message: 'User not found' });
-}
-
-// Handle userImage from the request body
-// Upload and update user image if provided
-if (files && files.length > 0) {
-  for (const file of files) {
-    const randomId = Math.random().toString(36).substring(2);
-    const imageFileName = randomId + file.name;
-    const base64Image = `data:${file.mimetype};base64,${file.data.toString('base64')}`;
-
-    try {
-      const { secure_url: imageUrl, public_id: imageCldId } = await uploadToCloudinary(base64Image, `profile-images/${imageFileName}`);
-
-      // Add the new image object to the userImage array
-      user.userImage.push({
-        url: imageUrl,
-        cld_id: imageCldId,
+    } else {
+      // If userImage array is not empty and no new file is provided, return the existing files
+      return res.json({
+        message: `User profile updated successfully`,
+        userId: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        userImage: user.userImage,
       });
-    } catch (error) {
-      console.error('Error uploading image to Cloudinary:', error.message);
-      return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
     }
   }
-}
 
-// Save the updated user
-await user.save();
+  // Save the updated user
+  await user.save();
 
-return res.json({
-  message: `User profile updated successfully`,
-  userId: user._id,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  email: user.email,
-  userImage: user.userImage,
-  token,
-});
-
+  // Send the response
+  return res.json({
+    message: `User profile updated successfully`,
+    userId: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    userImage: user.userImage,
+  });
 } catch (error) {
   console.error(error);
-  logger.error(error)
+  logger.error(error);
   return res.status(500).json({ message: 'Internal Server Error' });
-}        
+}
+
   }
 );
 

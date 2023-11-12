@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   },
   cPassword: {
     type: String,
-    require: true,
+    // required: true,
   },
   roleId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -43,10 +43,6 @@ const userSchema = new mongoose.Schema({
       cld_id: { type: String },
     },
   }],
-  // contentStartTime: {
-  //   type: String,
-  //   default: new Date().getTime().toString(),
-  // },
   rewardedContents: {
     type: [
       {
