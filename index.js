@@ -16,13 +16,12 @@ const superAdminRouter = require("./routes/superAdmin");
 const categoryRouter = require("./routes/category");
 const withdrawalRouter = require("./routes/withdrawal");
 const withdrawalHistoryRouter = require("./routes/withdrawHistory");
+const forgetPasswordRouter = require("./routes/forget-pass");
 
 
 const port = process.env.PORT || 4000;
 app.use(cors());
-// app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(bodyParser.json());
-// app.use(bodyParser.text({ type: '/' }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(fileUpload());
 app.use(express.json());
@@ -37,6 +36,7 @@ app.use('/api/v1/superAdmin', superAdminRouter);
 app.use('/api/v1/category', categoryRouter);
 app.use('/api/v1/withdraw', withdrawalRouter)
 app.use('/api/v1/transactionHistory', withdrawalHistoryRouter)
+app.use('/api/v1/password', forgetPasswordRouter);
 
 connectDB();
 app.listen(port, () => {
