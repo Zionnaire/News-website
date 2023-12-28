@@ -20,7 +20,14 @@ const forgetPasswordRouter = require("./routes/forget-pass");
 
 
 const port = process.env.PORT || 4000;
-app.use(cors());
+
+const corsOptions = {
+  origin: 'https://dahprofithive.com',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(fileUpload());
