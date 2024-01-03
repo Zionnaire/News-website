@@ -153,7 +153,6 @@ userRouter.put(
   }),
   ],
   async (req, res) => {
-  // ...
 
 try {
   const errors = validationResult(req);
@@ -175,8 +174,14 @@ try {
   if (firstName) user.firstName = firstName;
   if (lastName) user.lastName = lastName;
   if (email) user.email = email;
-  if (password !== undefined && password !== null) user.password = password;
-  if (cPassword) user.cPassword = cPassword;
+  //let it hash password
+ if (password !== undefined && password !== null) user.password = password;
+
+ // Hash password before save
+ if (cPassword !== undefined && cPassword !== null) {
+  const hashPassword = await bcrypt.hash(cPassword, 10);
+  user.password = hashPassword;
+ }
 
   // Extracting the first file from req.files
   const files = req.files ? Object.values(req.files) : [];
@@ -188,6 +193,7 @@ try {
     if (invalidFiles.length > 0) {
       return res.status(400).json({ message: 'Invalid file type' });
     }
+    console.log('Files array:', files);
 
     // If userImage array is empty, push the new file
     if (user.userImage.length === 0) {

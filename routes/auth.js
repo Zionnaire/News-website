@@ -25,9 +25,10 @@ const authRouter = express.Router();
 authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    let userExist = await User.findOne({ email: email }).populate('roleId');
+    let userExist = await User.findOne({ email }).populate('roleId');
     if (!userExist) {
-      logger.error(`User not found: ${email}`);
+      logger.error(`User not found. Requested Email: ${req.body.email}`);
+      logger.error(`Full Request Body: ${JSON.stringify(req.body)}`);
       return res.status(404).json({
         message: "User not found"
       });
@@ -60,7 +61,7 @@ authRouter.post("/login", async (req, res) => {
       token
     });
   } catch (error) {
-    logger.error(error);
+    logger.error(error.message);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -166,7 +167,7 @@ authRouter.get('/premium-content', verifyToken, async (req, res) => {
       token: token
     });
   } catch (error) {
-    logger.error(error);
+    logger.error(error.message);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });

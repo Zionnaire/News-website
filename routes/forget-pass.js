@@ -2,8 +2,22 @@ const express = require('express');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const User = require('../models/users');
+const { createLogger, transports, format } = require('winston');
 // const { validationResult } = require('express-validator');
 const forgetPasswordRouter = express.Router();
+
+// Configure Winston logger
+const logger = createLogger({
+    transports: [
+      new transports.Console(),
+      new transports.File({ filename: 'error.log', level: 'error' }),
+      new transports.File({ filename: 'combined.log' })
+    ],
+    format: format.combine(
+      format.timestamp(),
+      format.json()
+    )
+  });
 
 // Validation Middleware
 const validateEmail = (req, res, next) => {
@@ -18,9 +32,10 @@ const validateEmail = (req, res, next) => {
 
 // Error Handling Middleware
 const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).send('Internal Server Error');
-};
+    console.error('Error:', err);
+    res.status(500).send(`Internal Server Error: ${err.message}`);
+  };
+  
 
 // Forgot password route
 forgetPasswordRouter.post(
@@ -69,6 +84,8 @@ forgetPasswordRouter.post(
       await transporter.sendMail(mailOptions);
       res.status(200).send('Email sent');
     } catch (error) {
+        logger.error(error)
+        console.error('Forgot Password Route Error:', error.message);
       next(error);
     }
   }
