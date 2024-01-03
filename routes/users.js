@@ -185,6 +185,7 @@ try {
 
   // Extracting the first file from req.files
   const files = req.files ? Object.values(req.files) : [];
+  console.log('Files:', files);
 
   // Check if files is an array and not empty
   if (Array.isArray(files) && files.length > 0) {
@@ -307,6 +308,5 @@ async function uploadToCloudinary(base64File, folder) {
     throw error;
   }
 }
-
 
 module.exports = userRouter;
