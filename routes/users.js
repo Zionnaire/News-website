@@ -185,7 +185,7 @@ try {
 
   // Extracting the first file from req.files
   const files = req.files ? Object.values(req.files) : [];
-  console.log('Files:', files);
+  // console.log('Files:', files);
 
   // Check if files is an array and not empty
   if (Array.isArray(files) && files.length > 0) {
@@ -194,7 +194,7 @@ try {
     if (invalidFiles.length > 0) {
       return res.status(400).json({ message: 'Invalid file type' });
     }
-    console.log('Files array:', files);
+    // console.log('Files array:', files);
 
     // If userImage array is empty, push the new file
     if (user.userImage.length === 0) {

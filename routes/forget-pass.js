@@ -3,7 +3,8 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const User = require('../models/users');
 const { createLogger, transports, format } = require('winston');
-// const { validationResult } = require('express-validator');
+const { body } = require('express-validator');
+ const { validationResult } = require('express-validator');
 const forgetPasswordRouter = express.Router();
 
 // Configure Winston logger
@@ -67,12 +68,14 @@ forgetPasswordRouter.post(
           pass: process.env.EMAIL_PASSWORD,
         },
       });
+      // console.log(process.env.EMAIL_USER)
+      // console.log(process.env.EMAIL_PASSWORD)
 
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: 'Password Reset',
-        text: `You are receiving this email because you (or someone else) has requested the reset of the password for your account.
+        body: `You are receiving this email because you (or someone else) has requested the reset of the password for your account.
     
         Please click on the following link, or paste this into your browser to complete the process:
     
@@ -82,10 +85,10 @@ forgetPasswordRouter.post(
       };
 
       await transporter.sendMail(mailOptions);
-      res.status(200).send('Email sent');
+      res.status(200).json({ message: 'Email sent', resetToken });
     } catch (error) {
-        logger.error(error)
-        console.error('Forgot Password Route Error:', error.message);
+      logger.error(error);
+      console.error('Forgot Password Route Error:', error.message);
       next(error);
     }
   }
@@ -107,7 +110,7 @@ forgetPasswordRouter.post(
       });
 
       if (!user || user.resetPasswordExpire < Date.now()) {
-        return res.status(400).send('Invalid token');
+        return res.status(400).json({message: 'Invalid token'});
       }
 
       user.password = password;
@@ -115,7 +118,7 @@ forgetPasswordRouter.post(
       user.resetPasswordExpire = undefined;
 
       await user.save();
-      res.send('Password updated');
+      res.status(200).json({message: 'Password updated'});
     } catch (error) {
       next(error);
     }
