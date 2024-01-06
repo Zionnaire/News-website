@@ -22,7 +22,7 @@ const forgetPasswordRouter = require("./routes/forget-pass");
 const port = process.env.PORT || 4000;
 
 const corsOptions = {
-  origin: 'https://dahprofithive.com',
+  origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
 };
