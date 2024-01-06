@@ -1,5 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
+const bcrypt = require("bcryptjs");
 const nodemailer = require('nodemailer');
 const User = require('../models/users');
 const { createLogger, transports, format } = require('winston');
@@ -36,7 +37,6 @@ const errorHandler = (err, req, res, next) => {
     console.error('Error:', err);
     res.status(500).send(`Internal Server Error: ${err.message}`);
   };
-  
 
 // Forgot password route
 forgetPasswordRouter.post(
@@ -50,8 +50,6 @@ forgetPasswordRouter.post(
       if (!user) {
         return res.status(400).send('User not found');
       }
-
-
 
       const resetToken = crypto.randomBytes(20).toString('hex');
       const resetPasswordToken = crypto
@@ -115,7 +113,14 @@ forgetPasswordRouter.post(
         return res.status(400).json({message: 'Invalid token'});
       }
 
-      user.password = password;
+       //let it hash password
+ if (password !== undefined && password !== null) user.password = password;
+
+ // Hash password before save
+ if (password !== undefined && password !== null) {
+  const hashPassword = await bcrypt.hash(password, 10);
+  user.password = hashPassword;
+ }
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
 
