@@ -51,6 +51,7 @@ forgetPasswordRouter.post(
         return res.status(400).send('User not found');
       }
 
+  // Generate a random token
       const resetToken = crypto.randomBytes(20).toString('hex');
       const resetPasswordToken = crypto
         .createHash('sha256')
@@ -64,18 +65,18 @@ forgetPasswordRouter.post(
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: "info.dahprofithive@gmail.com",
-          pass: "mxnyzmldfuykuukm",
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
         },
       });
-      // console.log(process.env.EMAIL_USER)
-      // console.log(process.env.EMAIL_PASSWORD)
+       console.log(process.env.EMAIL_USER)
+       console.log(process.env.EMAIL_PASSWORD)
 
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: 'Password Reset',
-        body: `You are receiving this email because you (or someone else) has requested the reset of the password for your account.
+        text: `You are receiving this email because you (or someone else) has requested the reset of the password for your account.
     
         Please click on the following link, or paste this into your browser to complete the process:
     
@@ -83,7 +84,7 @@ forgetPasswordRouter.post(
     
         If you did not request this, please ignore this email and your password will remain unchanged.`
       };
-
+console.log(mailOptions)
       await transporter.sendMail(mailOptions);
       res.status(200).json({ message: 'Email sent', resetToken });
     } catch (error) {
