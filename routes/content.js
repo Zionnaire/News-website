@@ -255,26 +255,30 @@ contentRouter.get('/contents/:id', async (req, res) => {
 contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
+    const contentId = req.params.id;
+    const adminExist = await Admin.findById(userId);
+    const superAdminExist = await SuperAdmin.findById(userId);
 
     // Find the content by ID
-    const content = await Content.findById(req.query.id);
+    const content = await Content.findById(contentId);
 
     if (!content) {
       return res.status(404).json({ message: 'Content not found' });
     }
 
     // Check if the authenticated user is the owner of the content
-    if (content.userId.toString() !== userId) {
+    if (!adminExist && !superAdminExist) {
       return res.status(403).json({ message: 'Unauthorized access' });
     }
 
     // Update the content
+    // console.log('Content ID:', contentId);
     const updatedContent = await Content.findByIdAndUpdate(
-      req.query.id,
+      contentId,
       req.body,
       { new: true }
     );
-
+    // console.log('Updated Content:', updatedContent);
     res.json(updatedContent);
   } catch (error) {
     logger.error('Content Update Error:', error);
