@@ -279,7 +279,7 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
       { new: true }
     );
     // console.log('Updated Content:', updatedContent);
-    res.json(updatedContent);
+    return res.status(200).json({message: 'Content uploaded successfully', updatedContent});
   } catch (error) {
     logger.error('Content Update Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
