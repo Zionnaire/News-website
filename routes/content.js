@@ -252,7 +252,7 @@ contentRouter.get('/contents/:id', async (req, res) => {
 });
 
 // Update a specific content by ID
-contentRouter.put('/contents/:id', verifyToken, upload.single('file'), async (req, res) => {
+contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const contentId = req.params.id;
@@ -272,13 +272,14 @@ contentRouter.put('/contents/:id', verifyToken, upload.single('file'), async (re
     }
 
     // Update the content
+    // console.log('Content ID:', contentId);
     const updatedContent = await Content.findByIdAndUpdate(
       contentId,
-      { ...req.body, file: req.file ? req.file.buffer : undefined }, // Handle file separately
+      req.body,
       { new: true }
     );
-
-    return res.status(200).json({ message: 'Content uploaded successfully', updatedContent });
+    // console.log('Updated Content:', updatedContent);
+    return res.status(200).json({message: 'Content uploaded successfully', updatedContent});
   } catch (error) {
     logger.error('Content Update Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
