@@ -160,7 +160,7 @@ try {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { firstName, lastName, email, password, cPassword } = req.body;
+  const { firstName, lastName, email } = req.body;
 
   // Assuming you have a user ID available in req.user.id after authentication
   const userId = req.user.id;
@@ -174,14 +174,14 @@ try {
   if (firstName) user.firstName = firstName;
   if (lastName) user.lastName = lastName;
   if (email) user.email = email;
-  //let it hash password
- if (password !== undefined && password !== null) user.password = password;
+//   //let it hash password
+//  if (password !== undefined && password !== null) user.password = password;
 
- // Hash password before save
- if (cPassword !== undefined && cPassword !== null) {
-  const hashPassword = await bcrypt.hash(cPassword, 10);
-  user.password = hashPassword;
- }
+//  // Hash password before save
+//  if (cPassword !== undefined && cPassword !== null) {
+//   const hashPassword = await bcrypt.hash(cPassword, 10);
+//   user.password = hashPassword;
+//  }
 
   // Extracting the first file from req.files
   const files = req.files ? Object.values(req.files) : [];
