@@ -272,16 +272,40 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
     }
 
     // Update the content
-    // console.log('Content ID:', contentId);
-    const updatedContent = await Content.findByIdAndUpdate(
-      contentId,
-      req.body,
-      { new: true }
-    );
-    // console.log('Updated Content:', updatedContent);
-    return res.status(200).json({message: 'Content uploaded successfully', updatedContent});
+    const { body, title, category, author } = req.body;
+
+    // Update text content
+    content.title = title || content.title;
+    content.body = body || content.body;
+    content.category = category || content.category;
+    content.author = author || content.author;
+
+    // Update images and videos
+    const updatedImages = req.body.images || [];
+    const updatedVideos = req.body.videos || [];
+
+    // Update images
+    if (updatedImages.length > 0) {
+      content.images = updatedImages.map((image) => ({
+        url: image.url || '',
+        cld_id: image.cld_id || '',
+      }));
+    }
+
+    // Update videos
+    if (updatedVideos.length > 0) {
+      content.videos = updatedVideos.map((video) => ({
+        url: video.url || '',
+        cld_id: video.cld_id || '',
+      }));
+    }
+
+    // Save the updated content
+    const updatedContent = await content.save();
+
+    return res.status(200).json({ message: 'Content updated successfully', updatedContent });
   } catch (error) {
-    logger.error('Content Update Error:', error);
+    console.error('Content Update Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
