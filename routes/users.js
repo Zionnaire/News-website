@@ -144,13 +144,13 @@ userRouter.put(
   body('firstName').trim().notEmpty().withMessage('First name is required'),
   body('lastName').trim().notEmpty().withMessage('Last name is required'),
   body('email').trim().isEmail().withMessage('Invalid email'),
-  body('password').optional().trim().isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  body('cPassword').optional().custom((value, { req }) => {
-    if (value && value !== req.body.password) {
-      throw new Error('Confirm password must match password');
-    }
-    return true;
-  }),
+  // body('password').optional().trim().isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  // body('cPassword').optional().custom((value, { req }) => {
+  //   if (value && value !== req.body.password) {
+  //     throw new Error('Confirm password must match password');
+  //   }
+  //   return true;
+  // }),
   ],
   async (req, res) => {
 
@@ -175,13 +175,13 @@ try {
   if (lastName) user.lastName = lastName;
   if (email) user.email = email;
   //let it hash password
- if (password !== undefined && password !== null) user.password = password;
+//  if (password !== undefined && password !== null) user.password = password;
 
- // Hash password before save
- if (cPassword !== undefined && cPassword !== null) {
-  const hashPassword = await bcrypt.hash(cPassword, 10);
-  user.password = hashPassword;
- }
+//  // Hash password before save
+//  if (cPassword !== undefined && cPassword !== null) {
+//   const hashPassword = await bcrypt.hash(cPassword, 10);
+//   user.password = hashPassword;
+//  }
 
   // Extracting the first file from req.files
   const files = req.files ? Object.values(req.files) : [];
