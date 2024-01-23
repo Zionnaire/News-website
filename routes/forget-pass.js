@@ -84,7 +84,7 @@ forgetPasswordRouter.post(
     
         If you did not request this, please ignore this email and your password will remain unchanged.`
       };
-console.log(mailOptions)
+// console.log(mailOptions)
       await transporter.sendMail(mailOptions);
       res.status(200).json({ message: 'Email sent', resetToken });
     } catch (error) {
