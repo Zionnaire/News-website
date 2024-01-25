@@ -138,86 +138,72 @@ let allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'
 
 // Update profile PUT request with image
 userRouter.put(
-  '/update-profile', verifyToken,
+  '/update-profile',
+  verifyToken,
   [
     // Validation middleware for updating profile
-  body('firstName').trim().notEmpty().withMessage('First name is required'),
-  body('lastName').trim().notEmpty().withMessage('Last name is required'),
-  body('email').trim().isEmail().withMessage('Invalid email'),
-  // body('password').optional().trim().isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  // body('cPassword').optional().custom((value, { req }) => {
-  //   if (value && value !== req.body.password) {
-  //     throw new Error('Confirm password must match password');
-  //   }
-  //   return true;
-  // }),
+    body('firstName').trim().notEmpty().withMessage('First name is required'),
+    body('lastName').trim().notEmpty().withMessage('Last name is required'),
+    body('email').trim().isEmail().withMessage('Invalid email'),
   ],
   async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-try {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+      const { firstName, lastName, email } = req.body;
+      const userId = req.user.id;
 
-  const { firstName, lastName, email, password, cPassword } = req.body;
+      // Find the user by ID
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
 
-  // Assuming you have a user ID available in req.user.id after authentication
-  const userId = req.user.id;
-  // Find the user by ID
-  const user = await User.findById(userId);
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
-  }
+      // Update user fields
+      if (firstName) user.firstName = firstName;
+      if (lastName) user.lastName = lastName;
+      if (email) user.email = email;
 
-  // Update user fields
-  if (firstName) user.firstName = firstName;
-  if (lastName) user.lastName = lastName;
-  if (email) user.email = email;
-  //let it hash password
-//  if (password !== undefined && password !== null) user.password = password;
+      // Handle image upload
+      const files = req.files ? Object.values(req.files) : [];
+      if (Array.isArray(files) && files.length > 0) {
+        // Delete existing images from Cloudinary
+        if (user.userImage.length > 0) {
+          await Promise.all(user.userImage.map(async (image) => {
+            await cloudinary.uploader.destroy(image.cld_id);
+          }));
+          user.userImage = []; // Clear the userImage array
+        }
 
-//  // Hash password before save
-//  if (cPassword !== undefined && cPassword !== null) {
-//   const hashPassword = await bcrypt.hash(cPassword, 10);
-//   user.password = hashPassword;
-//  }
+        // Validate file types
+        const invalidFiles = files.filter(file => !allowedImageTypes.includes(file.mimetype));
+        if (invalidFiles.length > 0) {
+          return res.status(400).json({ message: 'Invalid file type' });
+        }
 
-  // Extracting the first file from req.files
-  const files = req.files ? Object.values(req.files) : [];
-  // console.log('Files:', files);
-
-  // Check if files is an array and not empty
-  if (Array.isArray(files) && files.length > 0) {
-    // Check each file for allowed types
-    const invalidFiles = files.filter(file => !allowedImageTypes.includes(file.mimetype));
-    if (invalidFiles.length > 0) {
-      return res.status(400).json({ message: 'Invalid file type' });
-    }
-    // console.log('Files array:', files);
-
-    // If userImage array is empty, push the new file
-    if (user.userImage.length === 0) {
-      for (const file of files) {
-        try {
+        // Upload new images to Cloudinary
+        for (const file of files) {
           const randomId = Math.random().toString(36).substring(2);
           const imageFileName = randomId + file.name;
           const base64Image = `data:${file.mimetype};base64,${file.data.toString('base64')}`;
 
-          const { secure_url: imageUrl, public_id: imageCldId } = await uploadToCloudinary(base64Image, `profile-images/${imageFileName}`);
-
-          // Add the new image object to the userImage array
-          user.userImage.push({
-            url: imageUrl,
-            cld_id: imageCldId,
-          });
-        } catch (error) {
-          console.error('Error uploading image to Cloudinary:', error.message);
-          return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+          try {
+            const { secure_url: imageUrl, public_id: imageCldId } = await uploadToCloudinary(base64Image, `profile-images/${imageFileName}`);
+            user.userImage.push({ url: imageUrl, cld_id: imageCldId });
+          } catch (error) {
+            console.error('Error uploading image to Cloudinary:', error.message);
+            return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+          }
         }
       }
-    } else {
-      // If userImage array is not empty and no new file is provided, return the existing files
+
+      // Save the updated user
+      await user.save();
+
+      // Send the response
       return res.json({
         message: `User profile updated successfully`,
         userId: user._id,
@@ -226,29 +212,14 @@ try {
         email: user.email,
         userImage: user.userImage,
       });
+    } catch (error) {
+      console.error(error);
+      logger.error(error);
+      return res.status(500).json({ message: 'Internal Server Error' });
     }
   }
-
-  // Save the updated user
-  await user.save();
-
-  // Send the response
-  return res.json({
-    message: `User profile updated successfully`,
-    userId: user._id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    userImage: user.userImage,
-  });
-} catch (error) {
-  console.error(error);
-  logger.error(error);
-  return res.status(500).json({ message: 'Internal Server Error' });
-}
-
-  }
 );
+
 
 // Route to reward a user after clicking content 
 userRouter.post('/content', verifyToken, async (req, res) => {

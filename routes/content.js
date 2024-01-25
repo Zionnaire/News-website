@@ -171,6 +171,7 @@ await createContent(document, req, res);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 //Cloudinary File Upload
 const uploadVideoToCloudinary = async (base64Video, folderPath) => {
   try {
@@ -238,6 +239,7 @@ async function createContent(document, req, res) {
   }
 }
 
+
 // Get a specific content by ID
 contentRouter.get('/contents/:id', async (req, res) => {
   try {
@@ -271,34 +273,87 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized access' });
     }
 
+    // Delete existing images from Cloudinary
+    await Promise.all(content.images.map(async (image) => {
+      await cloudinary.uploader.destroy(image.cld_id);
+    }));
+
+    // Delete existing videos from Cloudinary
+    await Promise.all(content.videos.map(async (video) => {
+      await cloudinary.uploader.destroy(video.cld_id);
+    }));
+
+    // Clear existing images and videos
+content.images = [];
+content.videos = [];
+
     // Update the content
-    const { body, title, category, author } = req.body;
+    const { body, title, category } = req.body;
 
     // Update text content
     content.title = title || content.title;
     content.body = body || content.body;
     content.category = category || content.category;
-    content.author = author || content.author;
 
-    // Update images and videos
-    const updatedImages = req.body.images || [];
-    const updatedVideos = req.body.videos || [];
+    const files = Object.values(req.files); // Convert object to array
 
-    // Update images
-    if (updatedImages.length > 0) {
-      content.images = updatedImages.map((image) => ({
-        url: image.url || '',
-        cld_id: image.cld_id || '',
-      }));
+    if (!files || files.length === 0) {
+      return res.status(400).json({ message: 'No files uploaded' });
     }
 
-    // Update videos
-    if (updatedVideos.length > 0) {
-      content.videos = updatedVideos.map((video) => ({
-        url: video.url || '',
-        cld_id: video.cld_id || '',
-      }));
+    const maxFilesPerType = 2; // Set the maximum number of files per type
+
+    if (files.length > maxFilesPerType * 2) {
+      return res.status(400).json({ message: `Exceeded the maximum number of files allowed (${maxFilesPerType} images + ${maxFilesPerType} videos)` });
     }
+
+    // Separate files into images and videos
+    const images = [];
+    const videos = [];
+
+    files.forEach(file => {
+      if (allowedImageTypes.includes(file.mimetype)) {
+        images.push(file);
+      } else if (allowedVideoTypes.includes(file.mimetype)) {
+        videos.push(file);
+      }
+    });
+
+    for (const image of images) {
+      // console.log('Image object:', image);
+  if (image && image.mimetype && image.data) {
+    const randomId = Math.random().toString(36).substring(2);
+    const imageFileName = randomId + (image.name || '');
+    // console.log(imageFileName);
+    const base64Image = `data:${image.mimetype};base64,${image.data.toString('base64')}`;
+
+    try {
+      const { secure_url: imageUrl, public_id: imageCldId } = await uploadToCloudinary(base64Image, `contents/images/${imageFileName}`);
+      content.images.push({ url: imageUrl, cld_id: imageCldId });
+    } catch (error) {
+      console.error('Content Error:', error.message);
+      return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+    }
+  }
+}
+
+for (const video of videos) {
+  // console.log('Video object:', video);
+  if (video && video.mimetype && video.data) {
+    const randomId = Math.random().toString(36).substring(2);
+    const videoFileName = randomId + (video.name || '');
+    // console.log(videoFileName);
+    const base64Video = `data:${video.mimetype};base64,${video.data.toString('base64')}`;
+    
+    try {
+      const { videoUrl, videoCldId } = await uploadVideoToCloudinary(base64Video, `contents/videos/${videoFileName}`);
+      content.videos.push({ url: videoUrl, cld_id: videoCldId });
+    } catch (error) {
+      console.error('Content Error:', error.message);
+      return res.status(500).json({ message: error.message });
+    }
+  }
+}
 
     // Save the updated content
     const updatedContent = await content.save();
@@ -309,6 +364,7 @@ contentRouter.put('/contents/:id', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 contentRouter.post('/:id/make-premium', async (req, res) => {
   try {
