@@ -109,7 +109,6 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
         videos.push(file);
       }
     });
- 
 
     // Check if a content with the same title and category already exists
     const existingContent = await Content.findOne({ title, category });
@@ -126,7 +125,6 @@ contentRouter.post('/contents', verifyToken, async (req, res) => {
       author:req.user.userName,
       body,
     }
-
 
     for (const image of images) {
       // console.log('Image object:', image);
